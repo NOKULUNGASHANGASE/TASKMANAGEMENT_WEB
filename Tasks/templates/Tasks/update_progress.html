@@ -1,0 +1,16 @@
+<!-- templates/tasks/progress_bar.html -->
+<div class="progress-container">
+    <div class="progress" style="height: 20px;">
+        <div class="progress-bar" 
+             role="progressbar" 
+             
+             aria-valuenow="{{ task.progress }}" 
+             aria-valuemin="0" 
+             aria-valuemax="100">
+            {{ task.progress }}%
+        </div>
+    </div>
+    {% if task.progress == 100 %}
+        <span class="badge bg-success mt-2">Completed!</span>
+    {% endif %}
+</div>

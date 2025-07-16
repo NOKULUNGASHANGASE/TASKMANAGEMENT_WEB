@@ -1,0 +1,779 @@
+{% extends 'Tasks/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar Navigation -->
+    <div class="col-md-3 bg-light sidebar">
+      <h4 class="p-3 border-bottom">{{ contract }}</h4>
+      <ul class="nav flex-column">
+        {% for year in years %}
+          <li class="nav-item">
+            <a class="nav-link font-weight-bold">{{ year.year }}</a>
+            <ul class="nav flex-column ml-3">
+              {% for month in year.month_set.all %}
+                <li class="nav-item">
+                  <a class="nav-link {% if month == selected_month %}active bg-primary text-white{% endif %}" 
+                     href="?month={{ month.id }}">
+                    {{ month.get_month_display }} {{ month.year }}
+                  </a>
+                  
+                  {% if month == selected_month %}
+                    <ul class="nav flex-column ml-3">
+                      {% for week in month.week_set.all %}
+                        <li class="nav-item">
+                          <a class="nav-link {% if week == selected_week %}font-weight-bold bg-info text-white{%else%}text-dark{% endif %}"
+                             href="?month={{ month.id }}&week={{ week.id }}">
+                            Week {{ week.week_number }} ({{ week.start_date|date:"M d" }} - {{ week.end_date|date:"M d" }})
+                          </a>
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-md-9 p-4">
+      {% if selected_week %}
+        <h3 class="'mb-4">Task Entry: {{ selected_week }}</h3>
+        <form method="post">
+          {% csrf_token %}
+          {{ formset.{{form.as_p}}}}
+          
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+              <thead class="thead-dark">
+                <tr>
+                  <th>Day</th>
+                  <th>Date</th>
+                  <th>Hours (0-8)</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for form in formset %}
+                  <tr>
+                    <td class="align-middle">{{ form.instance.day_name }}</td>
+                    <td class="align-middle">{{ form.instance.date|date:"D, M d" }}</td>
+                    <td style="width: 120px;">
+                      {{ form.hours }}
+                      {%if form.hours.errors%}
+                      <div class="text-danger small">
+                      </div>
+                      {% endif %}
+                      </td>
+                    <td>
+                      {{ form.description }}
+                      {{ form.id }}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <button type="submit" class="btn btn--success btn-lg"><i class="fas fa-save"></i>Save Tasks
+          </button>
+        </form>
+        
+      <div class="mt-5 p-3 border-top">
+          <h5>Week Progress: {{ selected_week.progress|floatformat:1 }}%</h5>
+          <div class="progress " style="height: 25px;">
+            <div class="progress-bar bg-success" role="progressbar" style="width:30 ;"> 
+              {{ selected_week.progress }}
+              {{ selected_week.progress|floatformat:1 }}%
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <div class="d=flex flex-colum align-item-center justift-content-center"style="height:80 vh;">
+         <div class="text-center">
+          <i class="fas fa-task fa-4x text-muted mb-4"></i>
+          <h5 class="mb-3">No week selected</h5>
+          <p class="lead text-muted mb-4">
+            Please Select a week from the sidebar to enter your tasks
+          </p>
+          {% if selected_month %}
+          <div class="card border-primary">
+            <div class="card-hearder bg-primary text-white">
+             {{ selected_month.get_month_display }} {{ selected_month.year }} Overview
+          
+          </div>
+          <div class="progress" style="height: 20px;">
+            <div class="progress-bar" role="progressbar">
+                
+              {{ selected_month.progress|floatformat:1 }}%
+            </div>
+          </div>
+          </div>
+          
+          <h5>Weekly Breakdown:</h5>
+          <div class="list-group">
+          
+            {% for week in selected_month.week_set.all %}
+             
+                <a href="?month={{ selected_month.id }}&week={{ week.id }}"
+                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                  <div>
+                    
+                    Week {{ week.week_number }}
+                    <span class="text=muted">
+                      ({{week.start_date|date:"M d"}} - {{week.end_date|date:"M d"}})
+                      </span>
+                  </div>
+                  <span class="badge badge-primary badge-pill">
+                     {{ week.progress|floatformat:1 }}%
+                  </span>
+                </a>
+              </li>
+            {% endfor %}
+            </div>
+          </div>
+          
+        {% endif %}
+      </div>
+    </div>  
+  {% endif %}
+  </div>
+ </div>
+</div>
+{% endblock %}
+DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contract Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --accent: #7209b7;
+            --warning: #f72585;
+        }
+        
+        body {
+            background-color: #f5f7fb;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .contract-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .progress-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .progress-bar {
+            background: linear-gradient(to right, var(--success), var(--primary));
+            height: 12px;
+            border-radius: 10px;
+        }
+        
+        .selection-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .task-form-container {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        
+        .day-card {
+            border-left: 4px solid var(--success);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: #f8f9ff;
+            transition: all 0.3s ease;
+        }
+        
+        .day-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(67, 97, 238, 0.15);
+        }
+        
+        .day-header {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .week-summary {
+            background: linear-gradient(135deg, var(--accent), var(--warning));
+            color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: var(--secondary);
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-outline-primary:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .nav-tabs .nav-link {
+            color: var(--dark);
+            font-weight: 500;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: var(--primary);
+            font-weight: 600;
+            border-bottom: 3px solid var(--primary);
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        .year-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .year-item {
+            background: #f8f9ff;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .year-item:hover {
+            background: #eef2ff;
+        }
+        
+        .year-item.active {
+            background: linear-gradient(to right, rgba(67, 97, 238, 0.1), transparent);
+            border-left: 3px solid var(--primary);
+        }
+        
+        .month-item {
+            padding: 8px 15px;
+            margin: 5px 0;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .month-item:hover {
+            background: #eef2ff;
+        }
+        
+        .month-item.active {
+            background: rgba(67, 97, 238, 0.15);
+            color: var(--primary);
+            font-weight: 500;
+        }
+        
+        .week-item {
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .week-item:hover {
+            background: #eef2ff;
+        }
+        
+        .week-item.active {
+            background: rgba(67, 97, 238, 0.2);
+            color: var(--primary);
+            font-weight: 500;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 10px;
+            }
+            
+            .stat-card {
+                padding: 10px;
+            }
+            
+            .stat-number {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Contract Header -->
+        <div class="contract-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1><i class="fas fa-file-contract me-2"></i>Task Tracking Dashboard
+                    <p class="mb-0">Track your progress and Record weekly Tasks>
+                </div>
+                <div class="text-end">
+                    <h3>{{ contract.title }}</h3>
+                    <p class="mb-0">From {{ contract.start_date }} to {{ contract.end_date }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Progress Overview -->
+        <div class="progress-container">
+            <div class="row">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Contract Progress</span>
+                        <span>{{ contract.progress|floatformat:1 }}%</span>
+                    </div>
+                    <div class="progress" style="height: 12px;">
+                        <div class="progress-bar" role="progressbar" style="width:20px';"
+                             aria-valuenow="" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Month Progress</span>
+                        <span>
+                            {% if selected_month %}
+                                {{ selected_month.progress|floatformat:1 }}%
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="progress" >
+                        <div class="progress-bar" role="progressbar" 
+                             
+                             aria-valuenow="10"
+                             aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Week Progress</span>
+                        <span>
+                            {% if selected_week %}
+                                {{ selected_week.progress|floatformat:1 }}%
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="progress" >
+                        <div class="progress-bar" role="progressbar" 
+                             
+                             aria-valuenow="10"
+                             aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Selection Section -->
+        <div class="selection-card">
+            <div class="row">
+                <!-- Year Selection -->
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h5><i class="fas fa-calendar-alt me-2"></i>Select Year</h5>
+                    <div class="year-list mt-3">
+                        {% for year in years %}
+                        <div class="year-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong>{{ year.year }}</strong>
+                                <span class="badge bg-primary">{{ year.month_set.count }} months</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Month Selection -->
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h5><i class="fas fa-calendar me-2"></i>Select Month</h5>
+                    <div class="mt-3">
+                        <form method="get">
+                            <input type="hidden" name="contract_id" value="{{ contract.id }}">
+                            <select name="month" class="form-select" onchange="this.form.submit()">
+                                <option value="">Select a month</option>
+                                {% for year in years %}
+                                    {% for month in year.month_set.all %}
+                                        <option value="{{ month.id }}" {% if selected_month and selected_month.id = month.id %}selected{% endif %}></option>
+                                            {{ month.get_month_name }} {{ year.year }}
+                                        </option>
+                                    {% endfor %}
+                                {% endfor %}
+                            </select>
+                        </form>
+                        
+                        {% if selected_month %}
+                        <div class="mt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong>Selected Month:</strong>
+                                <span class="badge bg-info">{{ selected_month.get_month_name }} {{ selected_month.year.year }}</span>
+                            </div>
+                            <p class="mb-1">Start: {{ selected_month.start_date }}</p>
+                            <p class="mb-0">End: {{ selected_month.end_date }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Week Selection -->
+                <div class="col-lg-4">
+                    <h5><i class="fas fa-calendar-week me-2"></i>Select Week</h5>
+                    <div class="mt-3">
+                        {% if selected_month %}
+                        <form method="get">
+                            <input type="hidden" name="contract_id" value="{{ contract.id }}">
+                            <input type="hidden" name="month" value="{{ selected_month.id }}">
+                            <select name="week" class="form-select" onchange="this.form.submit()">
+                                <option value="">Select a week</option>
+                                {% for week in selected_month.week_set.all %}
+                                    <option value="{{ week.id }}" {% if selected_week and selected_week.id == week.id %}selected{% endif %}>
+                                        Week {{ week.week_number }} ({{ week.start_date|date:"M d" }} - {{ week.end_date|date:"M d" }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                        
+                        {% if selected_week %}
+                        <div class="mt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong>Selected Week:</strong>
+                                <span class="badge bg-info">Week {{ selected_week.week_number }}</span>
+                            </div>
+                            <p class="mb-1">From: {{ selected_week.start_date }}</p>
+                            <p class="mb-0">To: {{ selected_week.end_date }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>Please select a month first
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Task Form -->
+        {% if selected_week and formset %}
+        <div class="task-form-container">
+            <h4 class="mb-4">
+                <i class="fas fa-tasks me-2"></i>Weekly Tasks: 
+                <span class="text-primary">{{ selected_week.start_date|date:"M d" }} - {{ selected_week.end_date|date:"M d" }}</span>
+            </h4>
+            
+            <form method="post">
+                {% csrf_token %}
+                {{ formset.management_form }}
+                
+                <div class="row">
+                    {% for form in formset %}
+                    <div class="col-md-12 mb-3">
+                        <div class="day-card">
+                            <div class="day-header">
+                                {{ form.instance.day_name }} - {{ form.instance.date }}
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Hours Worked</label>
+                                    {{ form.hours }}
+                                    {% if form.hours.errors %}
+                                        <div class="text-danger">{{ form.hours.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Notes</label>
+                                    {{ form.notes }}
+                                </div>
+                            </div>
+                            {{ form.id }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="week-summary">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="mb-0">Week Summary</h5>
+                            <p class="mb-0">Total hours: <strong>{{ selected_week.total_hours|default:"0" }}</strong> / 40</p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button type="submit" class="btn btn-light">
+                                <i class="fas fa-save me-2"></i>Save Tasks
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        {% else %}
+        <div class="alert alert-primary text-center py-4">
+            <h4><i class="fas fa-calendar-check me-2"></i>Select a week to log your tasks</h4>
+            <p class="mb-0">Choose a month and week to start tracking your work hours</p>
+        </div>
+        {% endif %}
+        
+        <!-- Stats Section -->
+        <div class="row mt-4">
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-number">{{ contract.total_hours }}</div>
+                    <div class="stat-label">Total Hours</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-number">{{ contract.months.count }}</div>
+                    <div class="stat-label">Months</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-number">{{ contract.weeks.count }}</div>
+                    <div class="stat-label">Weeks</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-number">{{ contract.days.count }}</div>
+                    <div class="stat-label">Days</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation -->
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{% url 'contract_list' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Contracts
+            </a>
+            <div>
+                <a href="{% url 'contract_detail' contract.id %}" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-file-alt me-2"></i>Contract Details
+                </a>
+                <a href="{% url 'contract_update' contract.id %}" class="btn btn-primary">
+                    <i class="fas fa-edit me-2"></i>Edit Contract
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Simple year selection highlighting
+        document.querySelectorAll('.year-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.year-item').forEach(el => {
+                    el.classList.remove('active');
+                });
+                this.classList.add('active');
+            });
+        });
+        
+        // Form validation for hours
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener('change', function() {
+                if (parseFloat(this.value) < 0) {
+                    this.value = 0;
+                } else if (parseFloat(this.value) > 24) {
+                    this.value = 24;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
+
+
+@login_required
+def contract_dashboard(request, contract_id):
+    contract = get_object_or_404(Contract, id=contract_id, student=request.user)
+    years = Year.objects.filter(contract=contract).order_by('year')
+    years = Year.objects.filter(contract=contract)
+    years = Year.objects.all()
+    for year in years:
+     print(year.month_set.all())
+
+    selected_month = None
+    selected_week = None
+    formset = None
+    # Get current month (or first month if none selected)
+    selected_month_id = request.GET.get('month')
+    if selected_month_id:
+        selected_month = get_object_or_404(Month, id=selected_month_id, year__contract=contract)
+       
+
+    # Get selected week
+    
+    week_id = request.GET.get('week')
+    if selected_month and week_id:
+        selected_week = get_object_or_404(Week, id=week_id, month=selected_month)
+    
+    # Handle task submission
+    if request.method == 'POST' and selected_week:
+        formset = DailyTaskFormSet(request.POST, queryset=DailyTask.objects.filter(week=selected_week))
+        if formset.is_valid():
+            formset.save()
+            
+
+            
+            # Update progress calculations
+            update_progress(selected_week)
+            return redirect('contract_dashboard', contract_id=contract_id)
+    elif selected_week:
+        formset = DailyTaskFormSet(queryset=DailyTask.objects.filter(week=selected_week))
+    
+        
+
+    context = {
+        'contract': contract,
+        'years':years,
+        'selected_month': selected_month,
+        'selected_week': selected_week,
+        'formset': formset
+    }
+    return render(request, 'StudentTasks/dashbord_task.html', context)
+
+def update_progress(week):
+    # Update week progress
+    tasks = DailyTask.objects.filter(week=week)
+    total_hours = sum(task.hours for task in tasks)
+    week.progress = min(100, (total_hours / 40) * 100)  # 40 = 8hrs * 5 days
+    week.save()
+    
+    # Update month progress
+    month_weeks = Week.objects.filter(month=week.month)
+    total_weeks = month_weeks.count()
+    if total_weeks:
+        week.month.progress = sum(w.progress for w in month_weeks) / total_weeks
+      
+        week.month.save()
+    
+    # Update contract progress
+    contract = week.month.contract
+    contract_months = Month.objects.filter(year__contract=contract)
+    total_months = contract_months.count()
+    if total_months:
+        contract.progress = sum(m.progress for m in contract_months) / total_months
+      
+        contract.save()
+
+
+ \\\\\\\\\ nb nbnb nbnbnbnb
+ @login_required
+def weeklytask_detail(request, pk):
+    #contract = get_object_or_404(Contract, id=contract_id, student=request.user)
+    task = get_object_or_404(WeeklyTask, pk=pk)
+    return render(request, 'StudentTasks/weeklytask_detail.html', {'task': task})
+
+@login_required
+def weeklytask_update(request, pk):
+    ##contract = get_object_or_404(Contract, id=contract_id, student=request.user)
+    task = get_object_or_404(WeeklyTask, pk=pk,  contract__student=request.user)
+    if request.method == "POST":
+        form = WeeklyTaskForm(request.POST, instance=task)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Weekly task updated successfully.")
+            return redirect('weeklytask_list',contract_id=task.contract.id)
+    else:
+        form = WeeklyTaskForm(instance=task)
+    return render(request, 'StudentTasks/weeklytask_form.html', {'form': form})
+
+@login_required
+def weeklytask_delete(request, pk):
+    #contract = get_object_or_404(Contract, id=contract_id, student=request.user)
+    task = get_object_or_404(WeeklyTask, pk=pk, contract__student=request.user)
+    if request.method == "POST":
+        contract_id = task.contract.id
+        task.delete()
+        messages.success(request, "Weekly task deleted.")
+        return redirect('weeklytask_list', contract_id=contract_id)
+    return render(request, 'StudentTasks/weeklytask_delete.html', {'task': task})
+<!--  {% for task in tasks%}
+    <li> <strong>{{task.date}}</strong>: {{task.tasklist}}</li>
+    {% empty %}
+    <li>No weekly Tasks yet.</li>
+    {% endfor %}-->
+
+           <!--<a href="{% url 'StudentTasks:contract_detail' contract_id=contract.id %}" >My Contract and tasks</a>-->
+
+           def student_tasks_home(request):
+    user_contract = Contract.objects.filter(student=request.user).first()
+    contract_id = user_contract.id if user_contract else None  # Use None instead of 0 or ''
+    context = {
+        'contract_id': contract_id,
+        'contract': user_contract,
+    }
+    return render(request, 'StudentTasks/home.html', context)

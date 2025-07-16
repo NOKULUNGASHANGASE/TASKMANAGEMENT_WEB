@@ -1,0 +1,683 @@
+new_user=authenticate(username=email, password=password1)  # Authenticates the newly created user using their email (as username) and password. Returns a user object if authentication is successful; otherwise, returns None.
+if new_user is not None:  
+ #login(request,new_user ) activate instead
+  new_user.is_active = False
+  new_user.save()
+
+  if request.method == 'POST':           # Checks if the request method is POST. If true:Creates a new instance of SignUpForm populated with data from request.POST
+  form= SignUpForm(request.POST)
+  if form.is_valid():              # Validates the form data. If all fields meet validation criteria, proceeds to process the data
+    username=request.POST['email'].lower()
+    email=request.POST['email'].lower()
+    password1= request.POST['password1']
+    password2= request.POST['password2']
+    #form.save()
+    from django.contrib.auth.models import User
+    from django.db import IntegrityError
+    from django.shortcuts import render, redirect
+    from django.contrib import messages
+    
+    def signup_user(request):
+        if request.method == 'POST':
+            # Retrieve POST data directly
+            email = request.POST.get('email', '').lower()
+            password1 = request.POST.get('password1', '')
+            password2 = request.POST.get('password2', '')
+    
+            # Basic input validation
+            if not email or not password1 or not password2:
+                return render(request, 'Tasks/signupuser.html', {
+                    'error': 'All fields are required'
+                })
+            
+            if password1 != password2:
+                return render(request, 'Tasks/signupuser.html', {
+                    'error': 'Passwords did not match'
+                })
+    
+            try:
+                # Create user manually
+                user = User.objects.create_user(username=email, email=email, password=password1)
+                user.is_active = False  # Set user as inactive until email verification
+                user.save()
+    
+                # Send activation email (or perform any additional logic)
+                if sendActivationEmail(request, user):
+                    messages.success(request, f"Activation email sent to {user.email}.")
+                    return redirect('home')
+                else:
+                    user.delete()  # Clean up user if email fails
+                    return render(request, 'Tasks/signupuser.html', {
+                        'error': 'Could not send activation email. Please try again.'
+                    })
+            except IntegrityError:
+                return render(request, 'Tasks/signupuser.html', {
+                    'error': 'Email already exists'
+                })
+    
+        # For GET requests, display the signup form
+        return render(request, 'Tasks/signupuser.html')
+  
+  
+  
+    def signup_user(request):
+    form = SignUpForm()
+    payload = {"form": form}
+
+    if request.method == 'GET':
+        # Render the signup page with an empty form
+        return render(request, 'Tasks/signupuser.html', payload)
+
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)  # Populate form with POST data
+
+        if form.is_valid():
+            # Extract data from form
+            email = form.cleaned_data.get('email').lower()
+            password1 = form.cleaned_data.get('password1')
+            password2 = form.cleaned_data.get('password2')
+
+            if password1 != password2:
+                return render(request, 'Tasks/signupuser.html', {
+                    'form': form, 
+                    'error': 'Passwords did not match'
+                })
+
+            try:
+                user = form.save(commit=False)  # Don't commit until updates
+                user.username = email
+                user.is_active = False  # Set user inactive for email activation
+                user.set_password(password1)  # Properly hash the password
+                user.save()
+
+                # Authenticate the user
+                new_user = authenticate(username=email, password=password1)
+                if new_user:
+                    if sendActivationEmail(request, new_user):
+                        messages.success(request, f"Activation email sent to {new_user.email}. Please check your inbox.")
+                    else:
+                        messages.error(request, "Error sending activation email. Contact support.")
+                        user.delete()  # Clean up if email fails
+                        return render(request, 'Tasks/signupuser.html', {
+                            'form': form,
+                            'error': 'Account creation failed. Please try again!'
+                        })
+                return redirect('home')
+            except IntegrityError:
+                return render(request, 'Tasks/signupuser.html', {
+                    'form': form,
+                    'error': 'Email already exists'
+                })
+        else:
+            # Display validation errors
+            return render(request, 'Tasks/signupuser.html', {
+                'form': form,
+                'error': form.errors
+            })
+
+    return render(request, 'Tasks/signupuser.html', payload)
+
+    def signupuser(request):
+    password1=""
+    password2=""
+    
+    form=SignUpForm()  #Creates an empty instance of the SignUpForm. This form will be used to render fields on the signup page.
+    
+    payload = {
+        "form":form       #Prepares a dictionary (payload) containing the form instance. This dictionary will be passed to the template for rendering.
+      } 
+    if request.method =='GET':  
+      return render(request, 'Tasks/signupuser.html', payload) #Checks if the request method is GET. If true:Renders the Tasks/signupuser.html template.
+    
+    if request.method == 'POST':           # Checks if the request method is POST. If true:Creates a new instance of SignUpForm populated with data from request.POST
+      form= SignUpForm(request.POST)
+    
+      if form.is_valid():              # Validates the form data. If all fields meet validation criteria, proceeds to process the data
+        username=request.POST['email'].lower()
+        email=request.POST['email'].lower()
+        password1= request.POST['password1']
+        password2= request.POST['password2']
+        #form.save()
+       
+      
+      if password1 != password2:
+        return render(request, 'Tasks/signupuser.html', {'form': form,'error': 'Passwords did not match'})
+      try:
+          
+          user = form.save(commit=False)
+          user.username = email  # Use email as username
+          user.is_active = False  # For email activation
+          form.save()
+          print(email)
+          
+          new_user=authenticate(username=email, email=email, password=password1)  # Authenticates the newly created user using their email (as username) and password. Returns a user object if authentication is successful; otherwise, returns None.
+          if new_user is not None:  
+              if sendActivationEmail(request, new_user):
+                messages.success(request, f"Activation email sent to {new_user.email} access you inbox to activate your account.")
+              else:
+                messages.error(request, "Somthing went wrong while sending activation email please contact support.")
+                user.delete()  # Clean up if email fails
+                return render(request, 'Tasks/signupuser.html', {'form': form,'error': 'Account creation failed - please try again!!!!'})
+                
+              #we send email
+          return redirect('home') 
+      except IntegrityError:
+        
+        return render(request, 'Tasks/signupuser.html', {'form':SignUpForm(), 'error': 'Email already exists'})   
+    else:
+      form= SignUpForm() 
+    return render(request, 'Tasks/signupuser.html', {'form':SignUpForm(), 'error': 'invalid form submision try again'})
+          
+    form= SignUpForm() 
+    return render(request, 'Tasks/signupuser.html', {'form':SignUpForm()})
+  
+
+    def signupuser(request):
+  password1=""
+  password2=""
+
+  form=SignUpForm()  #Creates an empty instance of the SignUpForm. This form will be used to render fields on the signup page.
+
+  payload = {
+      "form":form       #Prepares a dictionary (payload) containing the form instance. This dictionary will be passed to the template for rendering.
+    } 
+  if request.method =='GET':  
+    return render(request, 'Tasks/signupuser.html', payload) #Checks if the request method is GET. If true:Renders the Tasks/signupuser.html template.
+
+  elif request.POST['password1']==request.POST['password2']:           
+      username=request.POST['email'].lower()
+      email=request.POST['email'].lower()
+      try:
+          user = form.save(commit=False)
+          user.username = email  # Use email as username
+          user.is_active = False  # For email activation
+          form.save()
+          print(email)
+          
+          new_user=authenticate(username=email, email=email, password=password1)  # Authenticates the newly created user using their email (as username) and password. Returns a user object if authentication is successful; otherwise, returns None.
+          if new_user is not None:  
+              if sendActivationEmail(request, new_user):
+                messages.success(request, f"Activation email sent to {new_user.email} access you inbox to activate your account.")
+              else:
+                messages.error(request, "Somthing went wrong while sending activation email please contact support.")
+                user.delete()  # Clean up if email fails
+                return render(request, 'Tasks/signupuser.html', {'form': form,'error': 'Account creation failed - please try again!!!!'})
+                
+              #we send email
+          return redirect('home') 
+      except IntegrityError:
+      
+       return render(request, 'Tasks/signupuser.html', {'form':SignUpForm(), 'error': 'Email already exists'})   
+    
+        
+  form= SignUpForm() 
+
+  
+
+
+
+
+
+
+
+
+  def signupuser(request):
+  
+  form=SignUpForm()  #Creates an empty instance of the SignUpForm. This form will be used to render fields on the signup page.
+  
+  payload = {
+      "form":form       #Prepares a dictionary (payload) containing the form instance. This dictionary will be passed to the template for rendering.
+    } 
+  if request.method =='GET':  
+    return render(request, 'Tasks/signupuser.html', payload) #Checks if the request method is GET. If true:Renders the Tasks/signupuser.html template.
+  
+  if request.method == 'POST':           # Checks if the request method is POST. If true:Creates a new instance of SignUpForm populated with data from request.POST
+    form= SignUpForm(request.POST)
+    if form.is_valid():              # Validates the form data. If all fields meet validation criteria, proceeds to process the data
+      username=request.POST['email'].lower()
+      email=request.POST['email'].lower()
+      password1= request.POST['password1']
+      password2= request.POST['password2']
+      form.save()
+      #print(email)
+    
+      if password1 != password2:
+        return render(request, 'Tasks/signupuser.html', {'form': form,'error': 'Passwords did not match'})
+      user = form.save(commit=False)
+      user.username = email  # Use email as username
+      user.is_active = False  # For email activation
+      form.save()
+      print(email)
+        
+      new_user=authenticate(username=email, password=password1)  # Authenticates the newly created user using their email (as username) and password. Returns a user object if authentication is successful; otherwise, returns None.
+      if new_user is not None:  
+            if sendActivationEmail(request, new_user):
+              messages.success(request, f"Activation email sent to {new_user.email} access you inbox to activate your account.")
+            else:
+              messages.error(request, "Somthing went wrong while sending activation email please contact support.")
+              user.delete()  # Clean up if email fails
+              return render(request, 'Tasks/signupuser.html', {'form': form,'error': 'Account creation failed - please try again!!!!'})
+              
+            #we send email
+      return redirect('home')
+    return render(request, 'Tasks/signupuser.html', {'form':SignUpForm(), 'error': 'Email already exists'})
+        
+    #else:
+     #form= SignUpForm() 
+    #return render(request, 'Tasks/signupuser.html', {'form':SignUpForm(), 'error': 'invalid form submision try again'})
+         
+  form= SignUpForm() 
+  return render(request, 'Tasks/signupuser.html', {'form':SignUpForm()})
+
+
+
+
+  def signupuser(request):
+  
+  form=SignUpForm()  #Creates an empty instance of the SignUpForm. This form will be used to render fields on the signup page.
+  
+  payload = {
+      "form":form       #Prepares a dictionary (payload) containing the form instance. This dictionary will be passed to the template for rendering.
+    } 
+  if request.method =='GET':  
+    return render(request, 'Tasks/signupuser.html', payload) #Checks if the request method is GET. If true:Renders the Tasks/signupuser.html template.
+  
+  if request.method == 'POST':           # Checks if the request method is POST. If true:Creates a new instance of SignUpForm populated with data from request.POST
+    form= SignUpForm(request.POST)
+    if form.is_valid():              # Validates the form data. If all fields meet validation criteria, proceeds to process the data
+      email=form.cleaned_data['email'].lower()
+      password1= form.cleaned_data['password1']
+      password2= form.cleaned_data['password2']
+    
+      if password1 != password2:
+        return render(request, 'Tasks/signupuser.html', {'form': form,'error': 'Passwords did not match'})
+      
+      try:
+        user = form.save(commit=False)
+        user.username = email  # Use email as username
+        user.is_active = False  # For email activation
+        user.save()
+        print(email)
+        
+      except IntegrityError:
+        
+        return render(request, 'Tasks/signupuser.html', {'form':SignUpForm(), 'error': 'Email already exists'})
+        
+        
+      #new_user=authenticate(username=email, password=password1)  # Authenticates the newly created user using their email (as username) and password. Returns a user object if authentication is successful; otherwise, returns None.
+      if sendActivationEmail(request, user):   
+          messages.success(request, f"Activation email sent to {user.email} access you inbox to activate your account.")
+      else:
+          messages.error(request, "Somthing went wrong while sending activation email please contact support.")
+          #user.delete()  # Clean up if email fails
+          return render(request, 'Tasks/signupuser.html', {'form': form,'error': 'Account creation failed - please try again'})
+              
+            #we send email
+      return redirect('home')
+    
+  return render(request, 'Tasks/signupuser.html', {'form': form, 'error': 'please fix the errors and try again'})
+
+def get_calendar_service():
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    
+    jsonPath = os.path.join(BASE_DIR, 'static','Tasks','json','client_secret_622125168352-46m55tsv9v76nkapf6hhqrdt3qna0oe5.apps.googleusercontent.com.json')
+    credentials = service_account.Credentials.from_service_account_file(
+       jsonPath,scopes=['https://www.googleapis.com/auth/calendar']
+    )
+    service = build('calendar', 'v3', credentials=credentials)
+    return service
+
+
+
+
+
+def create_event(taskId):
+    
+ 
+    task = get_list_or_404(Task, pk = taskId)
+    service = get_calendar_service()
+    event = {
+        'summary': task.title,
+        'location': '123 Business St.',
+        'description': task.description,
+        'start': {
+            'dateTime': task.created,
+            'timeZone': 'Africa/Johannesburg',
+        },
+        'end': {
+            'dateTime': task.datecomplited,
+            'timeZone': 'Africa/Johannesburg',
+        },
+        'reminders': {
+        'useDefault': False,
+        'overrides': [
+        {'method': 'email', 'minutes': 24 * 60},
+        {'method': 'popup', 'minutes': 10},
+        ],
+  },
+    }
+    event = service.events().insert(calendarId='primary', body=event).execute()
+    print(f"Event created: {event.get('htmlLink')}")
+
+
+
+
+
+    rom googleapiclient.discovery import build
+from django.conf.urls.static import static
+import os
+from .models import Task
+from django.shortcuts import get_object_or_404
+from datetime import timedelta
+from Tasks.models import Task
+
+def get_calendar_service(user_email=None):
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    
+    jsonPath = os.path.join(BASE_DIR, 'static','Tasks','json','client_secret_622125168352-46m55tsv9v76nkapf6hhqrdt3qna0oe5.apps.googleusercontent.com.json')
+    credentials = service_account.Credentials.from_service_account_file(
+       jsonPath,
+       scopes=['https://www.googleapis.com/auth/calendar'],
+       subject=user_email
+    )
+    service = build('calendar', 'v3', credentials=credentials)
+    return service
+
+
+def create_(task_id):
+    task = get_object_or_404(Task, pk=task_id)
+    user_email = task.user.email  
+    service = get_calendar_service(user_email)
+    start_time = task.due_date.isoformat()
+    end_time = (task.due_date + timedelta(hours=1)).isoformat()  
+    
+    # Calculate reminder minutes before due_date NBBB
+    reminder_delta = task.due_date - task.reminder_time
+    reminder_minutes = int(reminder_delta.total_seconds() // 60)
+    if reminder_minutes < 0:
+        reminder_minutes = 10  # Default 
+    
+    event_body = {
+        'summary': task.title,
+        'description': task.description,
+        'start': {'dateTime': start_time, 'timeZone': 'Africa/Johannesburg'},
+        'end': {'dateTime': end_time, 'timeZone': 'Africa/Johannesburg'},
+        'reminders': {
+            'useDefault': False,
+            'overrides': [
+                {'method': 'email', 'minutes': 24 * 60},
+                {'method': 'popup', 'minutes': reminder_minutes},
+            ],
+        },
+    }
+    
+    try:
+        event = service.events().insert(calendarId='primary', body=event_body).execute()
+        print(f"Event created: {event.get('htmlLink')}")
+    except Exception as e:
+        print(f"Error creating event: {e}")
+
+
+
+
+
+ <!--<h1>Welcome to Task Deshbourd</h1>-->
+            <nav class="navbar">
+              <div class="navbar-logo">
+                <a href="#">Tasks management</a>  
+              </div>
+                   {% if user.is_authenticated %}
+                  
+                  <ul class="navbar-links">
+                  <li><a href="{% url 'Mytasks'%}">Task List</a></li>
+                  <li><a href="{% url 'createtask'%}">Create Task</a></li>
+                  <li><a href="{% url 'completedtasks'%}">completed Task List</a></li>
+                  <li><a href="{% url 'update_user' task_pk=user.pk %}" >{{user}}</a></li>
+                  <li><a href="{% url 'student_tasks_home' %}">Student Tasks Tracking</a></li>
+                  
+             <br>
+                <a>Logged In as {{ user.username }}</a>
+                <form action="{% url 'logoutuser' %}" method="POST">
+                    {% csrf_token %}
+                    <a><button type="submit">Logout</button></a>
+                  </div>
+                </form>
+                
+  
+            {% else %}
+
+              
+            <li><a href="{% url 'signupuser' %}" >Sign Up</a></li>
+          
+
+            <li><a href="{% url 'loginuser' %}" >Login</a></li>
+
+            <li><a href="{% url 'loginuser' %}" >About</a></li>
+              </ul>
+            
+           {% endif %}
+          </nav>
+          <button class="theme-toggle" id="themeButton">🌓 Toggle Theme</button>
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>  
+      </div>
+        <br>
+        {% block content%}
+   
+          {% endblock%}
+
+
+#def update_progress(request, task_pk):
+    #task = get_object_or_404(Task, pk=task_pk)
+    #if request.method == 'POST':
+        #form = TaskForm(request.POST, instance=task)
+        #if form.is_valid():
+            #form.save()
+            #return redirect('Mytasks')  
+    #else:
+        #form = TaskForm(instance=task)
+    #return render(request, 'Tasks/update_progress.html', {'form': form, 'task': task})
+
+#def dashboard(request):
+    #total_tasks = Task.objects.count()
+    #completed_tasks = Task.objects.filter(progress=100).count()
+    #average_progress = Task.objects.aggregate(Avg('progress'))['progress__avg'] or 0
+    
+    #return render(request, 'Tasks/MyTasks.html', {
+        #'total_tasks': total_tasks,
+        #'completed_tasks': completed_tasks,
+        #'average_progress': round(average_progress, 1)
+    #})
+  def student_tasks_home(request):
+  return render(request, 'StudentTasks/home.html')
+
+@login_required
+def contract_list(request):
+    contracts = Contract.objects.filter(student=request.user)
+    return render(request, 'StudentTasks/contract_list.html', {'contracts': contracts})
+
+
+@login_required
+def contract_detail(request, pk):
+    contract = get_object_or_404(Contract, pk=pk, student=request.user)
+    return render(request, 'StudentTasks/contract_detail.html', {'contract': contract})
+
+
+@login_required
+def contract_create(request):
+    if request.method == 'POST':
+        form = ContractForm(request.POST)
+        if form.is_valid():
+            contract = form.save(commit=False)
+            contract.student = request.user  
+            contract.save()
+            contract.generate_time_periods()
+            return redirect('contract_list')
+    else:
+        form = ContractForm()
+    return render(request, 'StudentTasks/contract.html', {'form': form })
+
+@login_required
+def contract_update(request, contract_id):
+    contract = get_object_or_404(Contract, id=contract_id, student=request.user)
+    if request.method == "POST":
+        form = ContractForm(request.POST, instance=contract)
+        if form.is_valid():
+            form.save()
+            return redirect('contract_detail', contract_id=contract.id)
+    else:
+        form = ContractForm(instance=contract)
+    return render(request, 'StudentTasks/contract.html', {'form': form})
+
+
+@login_required
+def contract_delete(request, contract_id):
+    contract = get_object_or_404(Contract, id=contract_id, student=request.user)
+    if request.method == "POST":
+        contract.delete()
+        return redirect('contract_list')
+    return render(request, 'StudentTasks/contract_delete.html', {'contract': contract})
+
+@login_required
+def task_list(request):
+    tasks = DailyTask.objects.filter(week__month__year__contract__student=request.user)
+    return render(request, 'StudentTasks/task_list.html', {'tasks': tasks})
+
+# Daily Task Create View
+@login_required
+def task_create(request, week_id):
+    week = get_object_or_404(Week, id=week_id)
+    if request.method == "POST":
+        form = DailyTaskForm(request.POST)
+        if form.is_valid():
+            task = form.save(commit=False)
+            task.week = week
+            task.save()
+            return redirect('task_list')
+    else:
+        form = DailyTaskForm()
+    return render(request, 'StudentTasks/daily_task.html', {'form': form, 'week': week})
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Task Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+      
+    
+    <style>
+      
+    
+    </style>
+</head>
+            <body>
+                <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+                    <div class="container">
+                        <a class="navbar-brand" href="{% url 'student_tasks_home' %}">Student Tasks</a>
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        
+                            <ul class="navbar-nav">
+                                {% if user.is_authenticated %}
+                                    <li class="nav-item">
+                                        <span class="nav-link">Welcome, {{ user.username }}</span>
+                                    
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+
+                <main class="container mt-4">
+                  
+                    <div class="jumbotron">
+                        <p class="lead">Manage your training contracts and daily tasks efficiently.</p>
+                        <hr class="my-4">
+                        <p>Get started by creating a new contract or viewing your existing ones.</p>
+                        <br>
+                    </div>
+
+                    <div class="dashboard-cards">
+                        
+                        <div class="card">
+                        <h5>Create Contract</h3>
+                        <p>Create your Contract</p>
+                        <a href="{% url 'contract_create' %}" class="btn">Create</a>
+                    
+                    </div>
+                    <br>
+                        <br>
+                    <div class="card">
+                        <h5>Student Home</h5>
+                        <p>Manage your Tasks</p>
+                        <a href="{% url 'student_tasks_home' %}" class="btn">Home</a>
+                    </div>
+                <br>
+                <br>
+                <br>
+                    <div class="card">
+                        <h5>Contract List</h5>
+                        <p>View Your Contracts</p>
+                        <a href="{% url 'contract_list' %}" class="btn">My Contracts</a>
+                    </div>
+                    <br>
+                    <br>
+                    <br>
+                     <div class="card">
+                        <h5>Student Tasks</h5>
+                        <p>Manage your Tasks</p>
+                        <a href="{% url 'contract_dashboard'  contract_id %}" class="btn">View Weekly Tasks</a>
+                        
+                    </div>
+                    
+                    {% endblock %}
+                </main>
+
+                
+                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+
+                </script>
+            </body>
+            </html>
+
+
+const userEmail = 'nokulunga08@gmail.com';
+
+            async function AddData() {
+                const titleInput = document.getElementById('new-task-title'); 
+                const title = titleInput.value.trim();
+
+                if (!title) {
+                    alert('Please enter a task title'); 
+                    return;
+                }
+
+                try {
+                    const response = await fetch('http://127.0.0.1:8000/api/task-create', {
+                        method: 'POST', 
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ title: title, user_email: userEmail })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to add task');
+                    }
+
+                    titleInput.value = ''; 
+                    fetchData(); 
+
+                } catch (error) {
+                    console.error('Error adding task:', error);
+                    alert('Error adding task. Please check the console for details.');
+                }
+            }
+
+
+ 

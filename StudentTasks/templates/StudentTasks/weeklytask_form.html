@@ -1,0 +1,49 @@
+{% extends 'Tasks/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container">
+    <h2>Add Weekly Task</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <div class="form-group">
+            <label>Week Number</label>
+            <input type="text" class="form-control" id="weekNumDisplay" readonly>
+            <label>Auto-calculated Hours:</label>
+                <input type="text" 
+                    id="calculated-hours" 
+                    value="{{ default_hours }}" 
+                    readonly
+                    class="form-control">
+                <small class="text-muted">
+                    (8 hours/day * {{ 5 }} weekdays)
+        </small>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Task</button>
+        <a href="{% url 'StudentTasks:weeklytask_list' contract.id %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.querySelector('#id_date');
+        const weekNumDisplay = document.querySelector('#weekNumDisplay');
+        const contractStartDate = new Date('{{ contract.start_date|date:"Y-m-d" }}');
+        
+        dateInput.addEventListener('change', function() {
+            const selectedDate = new Date(this.value);
+            const timeDiff = selectedDate - contractStartDate;
+            const diffDays = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+            const weekNum = Math.floor(diffDays / 7) + 1;
+            
+            weekNumDisplay.value = `Week ${weekNum}`;
+        });
+    });
+    document.getElementById('id_absent_days').addEventListener('change', function() {
+    const absentDays = parseInt(this.value) || 0;
+    const weekdays = 5 - Math.min(absentDays, 5);
+    document.getElementById('calculated-hours').value = weekdays * 8;
+});
+    </script>
+{% endblock %}
+

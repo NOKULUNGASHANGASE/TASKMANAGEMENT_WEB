@@ -1,0 +1,33 @@
+{% extends 'Tasks/base.html' %}
+
+ {% block content%}
+ {{error}}
+
+  {{task.tittle}}
+
+  <form method="POST">
+    
+  {% csrf_token %}
+
+  {{form.as_p}}
+
+   <button type="submit">Save</button>
+
+  </form>
+
+  <form method="POST" action="{% url 'completetasks' task.id %}">
+    
+    {% csrf_token %}
+    
+    
+    <button type="submit">Complete Task</button>
+  </form>
+
+  <form method="POST" action="{% url 'deletetasks' task.id %}">
+    
+    {% csrf_token %}
+
+    
+    <button type="submit">Delete Task</button> 
+  </form>
+ {% endblock%}

@@ -1,0 +1,39 @@
+{% extends 'Tasks/base.html' %}
+
+{% block content %}
+
+
+<main class="container">
+    <div class="welcome-section">
+        <h10>Welcome to Task Manager, {{ user.username }}!</h10>
+        <p>Organize your tasks efficiently and boost your productivity</p>
+    </div>
+     <br>
+     <br>
+     <br>
+    <div class="dashboard-cards">
+        <div class="card">
+            <h3>My Tasks</h3>
+            <p>View your tasks</p>
+            <a href="{% url 'Mytasks' %}" class="btn">View</a>
+        </div>
+      <br>
+      <br>
+      <br>
+        <div class="card">
+            <h3>Create Task</h3>
+            <p>Add a new task</p>
+            <a href="{% url 'createtask' %}" class="btn">Create</a>
+        </div>
+        <br>
+        <br>
+        <br>
+        <div class="card">
+            <h3>Completed Tasks</h3>
+            <p>view your tasks</p>
+            <a href="{% url 'completedtasks' %}" class="btn">View</a>
+        </div>
+    </div>
+</main>
+
+{% endblock %}

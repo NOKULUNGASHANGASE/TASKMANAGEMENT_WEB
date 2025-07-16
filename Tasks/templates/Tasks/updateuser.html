@@ -1,0 +1,41 @@
+{% extends 'Tasks/base.html' %}
+
+
+{% block content%}
+  
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header text-center">
+              <h1 class="form-tittle">Update profile</h1>
+            </div>  
+             
+            <h2 class= "error-message">{{ error}}</h2>
+            <div class="card-body"> 
+            <form method="POST" action=".">
+    
+               {% csrf_token %}
+
+   
+               {% for field in form %}
+               <label for="{{ field.id_for_label }}"> <br>{{ field.label }}<br></label>
+               {{ field }}
+     
+            
+                {% endfor %}
+               <button type="submit" class="btn btn-Primary w-100">Update profile</button>
+           </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!--this line of javascript: hide the coment lines from the django default form -->
+<script>
+
+</script>
+{% endblock%}

@@ -1,0 +1,56 @@
+
+{% extends 'Tasks/base.html' %}
+
+{% block content %}
+  
+  <br>
+  <div class="container">
+  <main class="container mt-4">
+   
+       <h1 class="task-tittle"> Task List</h1>
+       <div class="w3-container w3-blue">
+        <form method="GET">
+            <input type='text' name='search-area'>
+            <input type="submit" value='search'>
+        </form>
+        <div class="header-bar">
+       <h7 style="margin:0">Hello {{request.user|title}} you have {{tasks.count}} incomplete task{{ tasks.count|pluralize}} </h7>
+       <ul class="task-item">
+      <div class="task-items-wrapper">
+       {% for task in tasks%}
+
+            <div class="dashboard-cards">
+          {% for task in tasks %}
+              <div class="card green-card">
+                  <h3>{{ task.title|truncatechars:15 }}</h3>
+                  <p>{{ task.description|truncatechars:30 }}</p>
+                  <p><strong>Due:</strong> {{ task.due_date|date:"M d, Y" }}</p>
+                  <a href="{% url 'viewtasks' task.id %}" class="btn">View Task</a>
+              </div>
+          {% empty %}
+              <p>No tasks found.</p>
+          {% endfor %}
+      </div>
+         <!-- <div class="dashboard-cards">
+             <div class="card">
+         
+            <a href="{% url 'viewtasks' task.id %}">
+            {%if task.important%}<b>{{task.title|truncatechars:10|safe}}</br> {%endif%}
+            {% if task.description%}:: {{task.description|truncatechars:10|safe}}{%endif%}
+            </a>
+          </div>
+          </div>
+          <br>
+          <br>
+          {% empty %}
+          <li>No tasks found.</li>
+          
+        {% endfor%}
+
+       </ul>-->
+    
+       
+  </div>
+
+{% endblock%}
+</main>

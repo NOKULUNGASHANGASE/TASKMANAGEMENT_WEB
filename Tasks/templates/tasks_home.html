@@ -1,0 +1,66 @@
+{% extends 'Tasks/base.html' %}
+
+{% block content %}
+
+<nav class="navbar">
+    <div class="navbar-logo">
+        <a href="#">Tasks management</a>
+    </div>
+    {% if user.is_authenticated %}
+    <ul class="navbar-links">
+        <li><a href="{% url 'Mytasks'%}">Task List</a></li>
+        <li><a href="{% url 'createtask'%}">Create Task</a></li>
+        <li><a href="{% url 'completedtasks'%}">Completed Tasks</a></li>
+        <li><a href="{% url 'update_user' task_pk=user.pk %}">{{user}}</a></li>
+  
+    </ul>
+    {% endif %}
+</nav>
+
+<main class="container">
+    <div class="welcome-section">
+        <h1>Welcome to Task Manager, {{ user.username }}!</h1>
+        <p>Organize your tasks efficiently and boost your productivity</p>
+    </div>
+
+    <div class="dashboard-cards">
+        <div class="card">
+            <h3>My Tasks</h3>
+            <p>View and manage your current tasks</p>
+            <a href="{% url 'Mytasks' %}" class="btn">View Tasks</a>
+        </div>
+
+        <div class="card">
+            <h3>Create New Task</h3>
+            <p>Add a new task to your list</p>
+            <a href="{% url 'createtask' %}" class="btn">Create Task</a>
+        </div>
+
+        <div class="card">
+            <h3>Completed Tasks</h3>
+            <p>Review your accomplished tasks</p>
+            <a href="{% url 'completedtasks' %}" class="btn">View Completed</a>
+        </div>
+    </div>
+</main>
+
+{% endblock %}
+
+
+def createtask (request):
+    if request.method == 'GET':
+      
+     return render(request, 'Tasks/createtask.html',{'form': TaskForm()}) 
+     
+    else:
+    
+      
+        form =  TaskForm(request.POST)
+        
+        newtask = form.save(commit=False)
+        
+        newtask.user=request.user
+        newtask.save()
+        create_task(newtask.id)
+        
+        return redirect('Mytasks')

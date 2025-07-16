@@ -1,0 +1,60 @@
+{% extends 'Tasks/base.html' %}
+{% load static %}
+
+{% block content %}
+<h2>Weekly Tasks</h2>
+<a href="{% url 'StudentTasks:weeklytask_create' contract.id %}">Add Weekly Tasks</a>
+
+
+<div class="row">
+  <div class="col-12">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Week</th>
+          <th>Date</th>
+          <th>Tasks</th>
+          <th>Hours</th>
+          <th>absent days </th>
+           <th>week total Hours</th>
+          <th>status</th>
+          
+        
+        </tr>
+      </thead>
+      <tbody>
+        {% regroup tasks by week_num as week_list %}
+        {% for week in week_list %}
+          {% for task in week.list %}
+          <tr>
+           <!---- {% if forloop.first %}
+              <td rowspan="{{ week.list|length }}">Week {{ week.grouper }}</td>
+            {% endif %}-->
+            
+            <td>{{ task.week_num }}</td>
+            <td>{{ task.date|date:"M d, Y" }}</td>
+            <td>{{ task.task_list }}</td>
+            <td>{{ task.hours_spent|default:"40" }}h</td>
+            <td>{{ task.absent_days}}</td>
+            <td>{{ task.expected_hours }}h</td>  <!-- Add this line -->
+              <td>
+                <span class="badge 
+                  {% if task.status == 'APPROVED' %}bg-success
+                  {% elif task.status == 'REJECTED' %}bg-danger
+                  {% else %}bg-warning{% endif %}">
+                  {{ task.status }}
+                </span>
+          </tr>
+          {% endfor %}
+        {% empty %}
+          <tr>
+            <td colspan="7" class="text-center">
+              <div class="alert alert-info">No tasks found for this contract.</div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{%endblock%}

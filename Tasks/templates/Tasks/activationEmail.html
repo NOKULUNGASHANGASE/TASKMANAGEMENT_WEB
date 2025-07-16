@@ -1,0 +1,14 @@
+{% autoescape off %}
+
+Hi {{user.first_name}} {{user.last_name}},
+
+please find the link below to activate your account
+on {{domain}}.
+
+{{protocol}}://{{domain}}/{% url 'activate' uidb64=uid token=token %}
+
+
+
+
+
+{% endautoescape %}

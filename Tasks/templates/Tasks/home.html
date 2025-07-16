@@ -1,0 +1,120 @@
+{% extends 'Tasks/base.html' %}
+{% load static %}
+{% block content%}
+<script src="https://cdn.jsdelivr.net/npm/swiffy-slider@1.6.0/dist/js/swiffy-slider.min.js" crossorigin="anonymous" defer></script>
+<link href="https://cdn.jsdelivr.net/npm/swiffy-slider@1.6.0/dist/css/swiffy-slider.min.css" rel="stylesheet" crossorigin="anonymous">
+
+<style>
+    .swiffy-slider {
+        position: relative;
+        width: 100%;
+        height: 100vh; 
+        overflow: hidden;
+    }
+    
+    .slider-container {
+        height: 100%; 
+    }
+    
+    .slider-container li {
+        height: 100%; 
+    }
+    
+    .slider-container li img {
+        width: 100%;
+        height: 60%;
+        object-fit: cover; 
+        display: block;
+    }
+    .slide-text {
+        position: absolute;
+        top: 50%; 
+        left: 50%;
+        transform: translate(-50%, -50%); 
+        color: rgb(49, 40, 212); 
+        font-size: 2em; 
+        text-align: center;
+        z-index: 10; 
+        padding: 20px;
+        background-color: rgba(0, 0, 0, 0.5); 
+    }
+    .msgDiv{
+        padding:0.6rem;
+    
+        display:flex;
+        justify-content:center
+    }
+    .slider-text {
+        animation: slideIn 0.5s ease-out;
+    }
+    @media (max-width: 768px) {
+        .slider-text {
+            font-size: 1rem;
+            padding: 10px 20px;
+            bottom: 10px;
+        }
+    }
+   
+
+    
+
+
+</style>
+
+
+<div>
+
+   {% if messages %}
+
+
+        <div>
+
+            {% for message in messages %}
+
+
+                <div class="{{ message.tags }}  msgDiv">
+                    <p>{{message}}</p>
+                </div>
+
+                <br/>
+                {{ message.tags }}
+            {% endfor %}
+        </div>
+
+   {%endif %}
+    </div>
+
+   
+<div class="swiffy-slider slider-nav-autoplay" data-slider-nav-autoplay-interval="3000">
+    <ul class="slider-container">
+        <li><img src="{% static 'Tasks/image0.jpg'%}" alt="Image 1" >
+        <div class="slider-text">A simple and intuitive web app to organize daily tasks, Helps manage time better with due dates, priorities, and categories</div>
+    </li>
+    
+        <li><img src="{% static 'Tasks/image8.jpg'%}" alt="Image 2">
+        <div class="slider-text">Reduces stress by keeping track of everything in one place</div>
+    </li>
+    
+    <li>
+        <img src="{% static 'Tasks/image9.jpg'%}" alt="Image 3">
+       <div class="slider-text">Boosts productivity by keeping tasks organized.</div>
+    </li>
+
+        <li><img src="{% static 'Tasks/image5.jpg'%}" alt="Image 4">
+        <div class="slider-text">Helps with goal setting and time management</div>
+    </li>
+    
+    </ul>
+    <button type="button" class="slider-nav"></button>
+    <button type="button" class="slider-nav slider-nav-next"></button>
+
+    <div class="slider-indicators">
+        <button class="active"></button>
+        
+</div>
+</div>
+
+
+{% endblock%}
+
+

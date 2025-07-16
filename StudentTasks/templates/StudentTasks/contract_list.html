@@ -1,0 +1,187 @@
+
+{% extends 'Tasks/base.html' %}
+  
+
+{% block content %}
+    <div class="container mt-4">
+        <h2>My Contracts</h2>
+          <style>
+            /* General Page Styling */
+            .container {
+                max-width: 900px;
+                margin: 40px auto;
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            }
+
+            /* Table Styling */
+            .table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+            }
+
+            .table th {
+                background-color: #007bff;
+                color: white;
+                padding: 10px;
+                text-align: left;
+            }
+
+            .table td {
+                padding: 10px;
+                border-bottom: 1px solid #ddd;
+            }
+
+            .table-striped tbody tr:nth-of-type(odd) {
+                background-color: #f2f2f2;
+            }
+            .progress-container {
+                display: flex;
+                align-items: center;
+            }
+
+            .progress-custom {
+                background-color: #eee;
+                border-radius: 5px;
+                height: 10px;
+                width: 100px;
+                position: relative;
+                overflow: hidden;
+            }
+            .progress-bar-custom {
+                background-color: #28a745;
+                height: 100%;
+                width: 100%;
+                transition: width 0.5s;
+            }
+
+            /* Status Badges */
+            .status-badge {
+                padding: 5px 10px;
+                font-weight: bold;
+                border-radius: 5px;
+                color: white;
+            }
+             .status-completed {
+                background-color: #28a745;
+            }
+
+            .status-active {
+                background-color: #007bff;
+            }
+
+            .status-pending {
+                background-color: #ffc107;
+                color: black;
+            }
+            .btn {
+                padding: 8px 12px;
+                text-decoration: none;
+                font-size: 14px;
+                border-radius: 4px;
+                transition: 0.3s;
+            }
+
+            .btn-info {
+                background-color: #17a2b8;
+                color: white;
+            }
+
+            .btn-warning {
+                background-color: #ffc107;
+                color: black;
+            }
+
+            .btn-danger {
+                background-color: #dc3545;
+                color: white;
+            }
+
+            .btn:hover {
+                opacity: 0.8;
+            }
+        </style>
+
+        {% if contracts %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Total Hours</th>
+                        <th>Completed Hours</th>
+                        <th>Progress</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contract in contracts %}
+                    <tr>
+                        <td>{{ contract.start_date }}</td>
+                        <td>{{ contract.end_date }}</td>
+                        <td>{{ contract.total_hours }}</td>
+                        <td>{{ contract.completed_hours }}</td>
+                       
+                        <td class="progress-container">
+                            <div class="d-flex align-items-center">
+                                <div class="progress-custom w-75 me-2">
+                                    <div class="progress-bar-custom" 
+                                         style=></div>
+                                </div>
+                                 <span>{{ contract.progress }}%</span>
+                            </div>
+                        </td>
+                        <td>
+                            {% if contract.progress == 100 %}
+                                <span class="status-badge status-completed">COMPLETED</span>
+                            {% elif contract.is_active %}
+                                <span class="status-badge status-active">ACTIVE</span>
+                            {% else %}
+                                <span class="status-badge status-pending">PENDING</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                        <td>
+                            <a href="{% url 'contract_detail' contract_id=contract.id %}">View Contract</a>
+                            <a href="{% url 'contract_update' contract_id=contract.id %}" class="btn btn-warning btn-sm">Edit</a>
+                            <a href="{% url 'contract_delete' contract_id=contract.id %}" class="btn btn-danger btn-sm">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+        
+            <p>No contracts found. <a href="{% url 'StudentTasks:contract_create' %}">Create a new contract</a>.</p>
+        {% endif %}
+    </div>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        
+                     

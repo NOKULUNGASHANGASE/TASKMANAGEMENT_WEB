@@ -1,0 +1,14 @@
+
+{% extends 'Tasks/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<h2>Contract: {{ contract.title }}</h2>
+<p><strong>Description:</strong> {{ contract.description }}</p>
+<p><strong>Start:</strong> {{ contract.start_date }}</p>
+<p><strong>End:</strong> {{ contract.end_date }}</p>
+<p><strong>Total Hours:</strong> {{ contract.total_day_hours }}</p>
+
+<a href="{% url 'StudentTasks:weeklytask_list' contract.id %}">View Weekly Tasks</a>
+{% endblock %}

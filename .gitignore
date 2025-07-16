@@ -1,0 +1,12 @@
+# Environment files
+*.env.*
+.env
+*.gitignore.*
+#SQLite database files
+*.db
+*.sqlite
+*.sqlite3"credentials.json" 
+"*.json" 
+*.task-calendar-sync-459909-4fa88ce7804f.json
+*.google_calendar.py
+*.emailing.py

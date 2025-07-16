@@ -1,0 +1,34 @@
+{% extends 'Tasks/base.html' %}
+
+{% block content%}
+
+
+  <br>
+  
+  <h2> You Have {{tasks.count}} Completed Task{{ tasks.count|pluralize}}</h2>
+  <ul>
+    {% for task in tasks%}
+      <a href="{% if task.datecomplited %} {% url 'viewtasks' task.id %} {% else %}#{% endif %}">
+        <li>
+          {%if task.important%}<b>{{task.title}}</br> 
+          {%endif%}
+
+          {% if task.description%}:: {{task.description|truncatechars:10|safe}}
+
+          {%endif%}
+          <br>
+          {{ task.datecomplited|date:"M j Y H:i" }}
+        </li>
+        <br>
+        <br>
+      </a>
+    {% endfor%}
+
+  </ul>
+
+
+
+    
+
+    
+{% endblock%}

@@ -1,0 +1,275 @@
+{% extends 'Tasks/base.html' %}
+{% load static %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contract Dashboard - Task Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@3.2.0/dist/fullcalendar.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@3.2.0/dist/fullcalendar.min.js"></script>
+
+    <style>
+        .fc .fc-toolbar-title {
+            font-size: 1.2rem;
+        }
+        .fc th, .fc-event {
+            font-size: 0.85rem;
+            padding: 2px;
+        }
+        /* Add custom styles here (if needed) */
+        .column {
+        float: left;
+        width: 33.33%;
+        }
+
+        /* Clear floats after the columns */
+        .row:after {
+        content: "";
+        display: table;
+        clear: both;
+        }
+
+        /* Responsive layout - makes the three columns stack on top of each other instead of next to each other on smaller screens (600px wide or less) */
+        @media screen and (max-width: 600px) {
+        .column {
+            width: 100%;
+        }
+        }
+    </style>
+
+</head>
+<body>
+
+<!-- Header Section -->
+<header class="container mt-4">
+    <h2>{{ contract.title }}</h2>
+    <p>
+        <strong>Duration:</strong> {{ contract.start_date }} to {{ contract.end_date }} |
+        <strong>Progress:</strong> {{ contract.progress|floatformat:1 }}%
+    </p>
+    <hr>
+</header>
+
+<!-- Navigation Section -->
+<nav class="container mb-4">
+    <div class="d-flex justify-content-center">
+        <a href="{% url 'StudentTasks:contract_list' %}" class="btn btn-outline-primary mx-2">My Contracts</a>
+        <a href="{% url 'StudentTasks:contract_create' %}" class="btn btn-outline-success mx-2">Create a New Contract</a>
+        <a href="{% url 'StudentTasks:student_tasks_home' %}" class="btn btn-outline-info mx-2">Dashboard</a>
+        {% if contract %}
+            <a href="{% url 'StudentTasks:weeklytask_list' contract.id %}" class="btn btn-outline-success mx-2">Tasks List</a>
+        {% else %}
+            <p class="text-muted">Create a contract first</p>
+        {% endif %}
+        {% if contract %}
+            <a href="{% url 'StudentTasks:weeklytask_create' contract.id %}" class="btn btn-outline-success mx-2">Add Weekly Task</a>
+        {% else %}
+            <p class="text-muted">Create a contract first</p>
+        {%endif%}
+
+    </div>
+    <hr>
+</nav>
+
+
+
+<!-- Task Submission Progress Section -->
+{% if contract %}
+    <div class="container mt-4">
+        <h5>Weekly Task Submission Progress</h5>
+        <div class="progress mb-2">
+            <div class="progress-bar bg-info" role="progressbar" style="width:10px" 
+                 aria-valuenow="{{ submission_progress }}" aria-valuemin="0" aria-valuemax="100">
+                {{ submission_progress }}%
+            </div>
+        </div>
+        <p><strong>Weeks Submitted:</strong> {{ submitted_weeks }} of {{ total_weeks }}</p>
+    </div>
+{% endif %}
+<div class="container mt-4">
+  <div class="d-flex overflow-auto" style="gap: 1rem; scroll-snap-type: x mandatory;">
+
+    <!-- Last Added Task Card -->
+    <div class="card flex-shrink-0" style="min-width: 320px; max-width: 400px; scroll-snap-align: start;">
+      <div class="card-header bg-info text-white">
+        <h5>Last Added Task</h5>
+      </div>
+      <div class="card-body">
+        {% if last_task %}
+          <p><strong>Title:</strong> {{ last_task.title }}</p>
+          <p><strong>Date:</strong> {{ last_task.date }}</p>
+          <p><strong>Week Number:</strong> {{ last_task.week_num }}</p>
+          <p><strong>Status:</strong>
+            <span class="badge
+              {% if last_task.status == 'COMPLETED' %}bg-success
+              {% elif last_task.status == 'PENDING' %}bg-warning
+              {% elif last_task.status == 'rejected' %}bg-danger
+              {% else %}bg-secondary{% endif %}">
+              {{ last_task.status }}
+            </span>
+          </p>
+          <p><strong>Hours Spent:</strong> {{ last_task.hours_spent }}</p>
+          <a href="{% url 'StudentTasks:weeklytask_list' contract.id %}" class="btn btn-outline-primary btn-sm">
+            View All Tasks
+          </a>
+        {% else %}
+          <div class="alert alert-light d-flex align-items-center justify-content-center mb-0">
+            No tasks have been added yet.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Due Tasks Card -->
+    <div class="card flex-shrink-0" style="min-width: 320px; max-width: 400px; scroll-snap-align: start;">
+      <div class="card-header bg-info text-white">
+        <h5 class="mb-0">Tasks to complete in your contract period ({{ due_tasks_count }})</h5>
+      </div>
+      <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+        {% if due_tasks %}
+          <div class="list-group">
+            {% for task in due_tasks %}
+              <div class="list-group-item">
+                <div class="d-flex w-100 justify-content-between">
+                  <h6 class="mb-1">{{ task.title }}</h6>
+                  <small class="{% if task.is_overdue %}text-danger{% else %}text-muted{% endif %}">
+                    {{ task.due_date|date:"M d, Y" }}
+                    {% if task.is_overdue %}(Overdue){% endif %}
+                  </small>
+                </div>
+                <p class="mb-1">{{ task.description|truncatechars:100 }}</p>
+                <small>Status: {{ task.get_status_display }}</small>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted">No tasks due at this time.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Calendar Card -->
+    <div class="card flex-shrink-0" style="min-width: 320px; max-width: 400px; scroll-snap-align: start;">
+      <div class="card-header bg-info text-white">
+        <h5 class="mb-0">YEAR PLAN TASKS CALENDAR</h5>
+      </div>
+      <div class="card-body" style="height: 400px; overflow-x: auto; overflow-y: hidden;">
+        <div id="task-calendar" style="height: 100%;"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+                
+            
+
+           
+        </div>
+    </div>
+</div>
+<div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="alert alert-secondary">
+                                <h6 class="alert-heading">Current Week</h6>
+                                <p class="mb-0">Week {{ current_week }} of {{ total_weeks }}</p>
+                                <p class="small mb-0 text-muted">Today: {{ today|date:"M d, Y" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="alert {% if due_tasks_count > 0 %}alert-warning{% else %}alert-success{% endif %}">
+                                <h6 class="alert-heading">Pending Tasks</h6>
+                                <p class="mb-0">{{ tasks_count }} weekly tasks</p>
+                                 <p class="mb-0">awaiting Supervisor approve</p>
+                                {% if tasks_count > 0 %}
+                                    <a href="#tasks-section" class="small">View all</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+<!-- Overdue Weeks Section -->
+{% if overdue_weeks %}
+    <div class="alert alert-danger mt-3">
+        <h5>Overdue Weeks - No Tasks Submitted</h5>
+        <ul>
+            {% for week in overdue_weeks %}
+                <li>Week {{ week.week_num }} ({{ week.start_date|date:"M d" }} - {{ week.end_date|date:"M d" }})</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% else %}
+    <div class="alert alert-success mt-3">
+        All past weeks have submissions. Great job!
+    </div>
+{% endif %}
+    
+</main>
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+
+<script>
+events = []
+{% for item in events %}
+
+
+        events.push({
+            'title': '{{item.title}}',
+            'start': '{{item.start}}',
+            'end':'{{item.end}}' ,
+            'is_overdue':'{{item.is_overdue}}' ,
+            'status':'{{item.status}}' ,
+            'task_id': '{{item.task_id}}',
+            'className':'{{item.className}}' ,
+        } )
+
+
+{% endfor %}
+document.addEventListener('DOMContentLoaded', function() {
+
+
+   
+
+    
+
+
+
+    console.log("events: ",events)
+
+    var calendarEl = document.getElementById('task-calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        //events: events,
+        eventClick: function(info) {
+            window.location.href = '/tasks/' + info.event.extendedProps.task_id + '/';
+        },
+        eventClassNames: function(arg) {
+            return arg.event.extendedProps.is_overdue ? ['fc-event-overdue'] : ['fc-event-due'];
+        },
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        height: 'auto', // Fills container height (400px)
+        contentHeight: 'auto', // Prevents internal overflow
+        aspectRatio: 1.5, // Width/height ratio
+        dayMaxEvents: 3, // Show max 3 events per day
+        views: {
+            dayGridMonth: {
+                dayHeaderFormat: { weekday: 'short' } // Compact day headers
+            }
+        }
+    });
+    calendar.render();
+});
+</script>
+
+</body>
+</html>
+{% endblock %}

@@ -36,13 +36,14 @@ urlpatterns = [
     #Auth
     path('signup/', views.signupuser, name='signupuser'), #signup/
     path('signup/', signupuser, name='signupuser'),
+    path('supervisor/signup/', views.supervisor_signup, name='supervisor_signup'),
     
     path('logoutuser/', views.logoutuser, name='logoutuser'),
     path('loginuser/', views.loginuser, name='loginuser'),
      #tasks pages
     path('Mytasks/', views.Mytasks, name='Mytasks'),
     path('createtask/', views.createtask, name='createtask'),
-    
+    path('supervisor_assign_task/', views.supervisor_assign_task, name='supervisor_assign_task'),
     #help user to be able to create the form without signing in
     path('accounts/login',views.loginuser, name="loginuser" ),
     path('update_user/<int:task_pk>/', views.update_user, name='update_user'),
@@ -51,6 +52,7 @@ urlpatterns = [
     path('completed',views.completedtasks, name='completedtasks' ),
     path('task/<int:task_pk>/delete',views.deletetasks, name='deletetasks' ),
     #path('task/<int:task_pk>/update_progress/', views.update_progress, name='update_progress'),
+   
     
     #email cornfirmation
     

@@ -4,10 +4,14 @@ from django.contrib.auth.models import User
 from django import forms
 from .models import Task, models
 from django_flatpickr.widgets import DatePickerInput
+from Management.models import Admin
+from Management.models import Student
+
 
 
 
 class TaskForm(ModelForm):
+    assigned_to_student = forms.ModelChoiceField(queryset=Student.objects.none())
     class Meta:
        
        model= Task
@@ -30,6 +34,11 @@ class TaskForm(ModelForm):
              }),
             'important': forms.CheckboxInput(attrs={'class': 'form-check-input'})
         }
+       def __init__(self, *args, **kwargs):
+        supervisor = kwargs.pop('supervisor', None)
+        super().__init__(*args, **kwargs)
+        if supervisor:
+            self.fields['assigned_to_student'].queryset = Student.objects.filter(supervisor=supervisor)
 
 class SignUpForm(UserCreationForm):
     class Meta:
@@ -85,4 +94,19 @@ class UserUpdateForm(UserChangeForm):
     
             }
        
+class SupervisorSignUpForm(UserCreationForm):
+    email = forms.EmailField(required=True)
+    first_name = forms.CharField(max_length=30)
+    last_name = forms.CharField(max_length=30)
+    admin = forms.ModelChoiceField(queryset=Admin.objects.all(), required=True)
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'password1', 'password2', 'admin']
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email').lower()
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("A user with that email already exists.")
+        return email
        

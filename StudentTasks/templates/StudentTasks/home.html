@@ -92,6 +92,12 @@
 {% endif %}
 <div class="container mt-4">
   <div class="d-flex overflow-auto" style="gap: 1rem; scroll-snap-type: x mandatory;">
+<div class="container mt-5">
+    <h5>Supervisor Assigned Assigments</h5>
+    <div id="assigned-tasks" class="list-group">
+        
+    </div>
+</div>
 
     <!-- Last Added Task Card -->
     <div class="card flex-shrink-0" style="min-width: 320px; max-width: 400px; scroll-snap-align: start;">
@@ -192,6 +198,8 @@
                             </div>
                         </div>
                     </div>
+ 
+                    
 
 <!-- Overdue Weeks Section -->
 {% if overdue_weeks %}
@@ -230,14 +238,9 @@ events = []
 
 
 {% endfor %}
+
+
 document.addEventListener('DOMContentLoaded', function() {
-
-
-   
-
-    
-
-
 
     console.log("events: ",events)
 
@@ -268,6 +271,73 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     calendar.render();
 });
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Fetch assigned tasks from backend
+    fetch('/tasks/assigned/')
+        .then(response => response.json())
+        .then(data => {
+            const taskContainer = document.getElementById('assigned-tasks');
+            if (data.tasks.length === 0) {
+                taskContainer.innerHTML = '<p class="text-muted">No assigned tasks.</p>';
+            } else {
+                data.tasks.forEach(task => {
+                    const taskItem = document.createElement('div');
+                    taskItem.className = 'list-group-item d-flex justify-content-between align-items-start';
+                    taskItem.innerHTML = `
+                        <div>
+                            <h6>${task.title}</h6>
+                            <p class="mb-1">${task.description}</p>
+                            <small>Due: ${task.due_date}</small>
+                        </div>
+                        <button class="btn btn-sm btn-success mark-complete" data-id="${task.id}">Mark as Completed</button>
+                    `;
+                    taskContainer.appendChild(taskItem);
+                });
+
+                // Attach click handlers
+                document.querySelectorAll('.mark-complete').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        const taskId = this.getAttribute('data-id');
+                        fetch(`/tasks/complete/${taskId}/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': getCookie('csrftoken'),
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ status: 'COMPLETED' })
+                        })
+                        .then(res => {
+                            if (res.ok) {
+                                this.parentElement.remove();
+                                alert('Task marked as completed!');
+                            } else {
+                                alert('Error completing task.');
+                            }
+                        });
+                    });
+                });
+            }
+        });
+
+    // CSRF helper
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+
+
 </script>
 
 </body>

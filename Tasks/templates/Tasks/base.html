@@ -335,7 +335,12 @@
             <nav class="navbar">
               <div class="navbar-logo">
                 <a href="#">Tasks management</a>  
-              </div>
+                </div>
+                {% if request.user.supervisor %}
+            
+                    <a href="{% url 'supervisor_dashboard' %}" class="btn btn-outline-primary">Dashboard</a>
+                {% endif %}
+
                 {% if user.is_authenticated %}
                   
                   <ul class="navbar-links">
@@ -356,7 +361,8 @@
 
               
             <li><a href="{% url 'signupuser' %}" >Sign Up</a></li>
-          
+            <li><a href="{% url 'supervisor_signup' %}">Supervisor Signup</a></li>
+
 
             <li><a href="{% url 'loginuser' %}" >Login</a></li>
 

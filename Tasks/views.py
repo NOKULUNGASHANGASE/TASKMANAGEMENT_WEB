@@ -74,6 +74,34 @@ def signupuser(request):
     form= SignUpForm() 
   return render(request, 'Tasks/signupuser.html', {'form':SignUpForm(), 'error': 'please fix the errors and try again'})  ###this is causing the error
          
+# Tasks/views.py
+
+from Management.models import Supervisor
+from .forms import SupervisorSignUpForm
+
+def supervisor_signup(request):
+    if request.method == 'POST':
+        form = SupervisorSignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.username = form.cleaned_data['email']
+            user.email = form.cleaned_data['email']
+            user.is_active = True  # or False if email activation is used
+            user.save()
+
+            # Create Supervisor instance
+            Supervisor.objects.create(
+                user=user,
+                Admin=form.cleaned_data['admin'],
+                status='active'
+            )
+
+            messages.success(request, "Supervisor account created successfully.")
+            return redirect('loginuser')  # Or another page
+    else:
+        form = SupervisorSignUpForm()
+
+    return render(request, 'Tasks/supervisor_signup.html', {'form': form})
 
 @login_required
 def update_user(request, task_pk):
@@ -137,9 +165,15 @@ def logoutuser(request):
   
 @login_required  
 def Mytasks (request):
+     student = getattr(request.user, 'student', None)
      tasks=Task.objects.filter(user=request.user, datecomplited__isnull=True)
      search_input = request.GET.get('search-area') or ''
     
+     if student:
+        student_tasks = Task.objects.filter(assigned_to_student=student, datecomplited__isnull=True)
+        tasks = tasks | student_tasks 
+
+        
      if search_input:
         tasks = tasks.filter(title__icontains=search_input)  
 
@@ -205,6 +239,30 @@ def deletetasks(request, task_pk):
     task.datecomplited = timezone.now()
     task.delete()
     return redirect('Mytasks')
+  
+
+@login_required
+def supervisor_assign_task(request):
+    try:
+        supervisor = Supervisor.objects.get(user=request.user)
+    except Supervisor.DoesNotExist:
+        messages.error(request, "You must be a supervisor to assign tasks.")
+        return redirect('home')
+
+    if request.method == 'POST':
+        form = TaskForm(request.POST, supervisor=supervisor)
+        if form.is_valid():
+            task = form.save(commit=False)
+            task.user = request.user  # supervisor
+            task.assigned_by = request.user
+            task.save()
+            messages.success(request, "Task assigned successfully.")
+            return redirect('supervisor_dashboard')
+    else:
+        form = TaskForm(supervisor=supervisor)
+
+    return render(request, 'Tasks/supervisor_assign_task.html', {'form': form})
+
   
 @login_required
 def update_task_status(request, pk):

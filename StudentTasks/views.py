@@ -11,12 +11,16 @@ from django.contrib.auth.decorators import login_required
 from .models import Contract, weeklytask
 from .forms import ContractForm, weeklytaskForm
 from datetime import timedelta
+from django.core.mail import send_mail
 from collections import defaultdict
 from django.core.exceptions import PermissionDenied
 from Management.models import Student, Supervisor
 from Tasks.models import Task
+from django.views.decorators.http import require_POST
 import datetime
 import json
+from django.conf import settings
+
 
 
 @login_required
@@ -58,7 +62,14 @@ def student_tasks_home(request):
         due_date__lte=timezone.now().date()
     ).order_by('due_date')
 
+    week_labels = []
+    expected_submissions = []
+    actual_submissions = []
 
+    for week_num in range(1, total_weeks + 1):
+        week_labels.append(f"Week {week_num}")
+        expected_submissions.append(1)
+        actual_submissions.append(1 if week_num in submitted_week_nums else 0)
 
     events = [{
             'title': task.title,
@@ -83,9 +94,38 @@ def student_tasks_home(request):
         'last_task': last_task,
         'due_tasks': due_tasks,
         'events': events,
+        'week_labels': week_labels,
+        'expected_submissions': expected_submissions,
+        'actual_submissions': actual_submissions,
         
     }
     return render(request, 'StudentTasks/home.html', context)
+
+
+@login_required
+def supervisor_dashboard(request):
+    # Ensure the logged-in user is a supervisor
+    try:
+        supervisor = Supervisor.objects.get(user=request.user)
+    except Supervisor.DoesNotExist:
+        messages.error(request, "You are not authorized to view this page.")
+        return redirect('home')  # or raise PermissionDenied
+
+    # Get all students under this supervisor
+    students = Student.objects.filter(supervisor=supervisor)
+
+    # Get all pending weekly tasks from these students
+    tasks = weeklytask.objects.filter(
+        contract__student__in=students,
+        status='Pending'
+    ).select_related('contract', 'contract__student').order_by('-date')
+
+    context = {
+        'students': students,
+        'tasks': tasks,
+    }
+
+    return render(request, 'StudentTasks/dashboard.html', context)
 
 @login_required
 def contract_list(request):
@@ -170,13 +210,50 @@ def weeklytask_create(request, contract_id):
 
     return render(request, 'StudentTasks/weeklytask_form.html', {'form': form, 'contract': contract, 'default_hours': 40-(0*8)})  
 
+@require_POST
 @login_required
-def approve_weeklytask(request, task_pk):
-    task = get_object_or_404(weeklytask, pk=task_pk)
-    if request.user != task.contract.student.Supervisor.user:
-        messages.error(request, 'You are not authorized to aprove this task')
-    else:    
-        task.status = 'Approved'
-        task.save()
-        messages.success(request, 'Task approved successfully!')
-    return redirect('contract_detail', pk=task_pk.contract.id )    
+def approve_weeklytask(request, task_id):
+    task = get_object_or_404(weeklytask, pk=task_id)
+    if request.user != task.contract.student.supervisor.user:
+        messages.error(request, "You are not authorized to approve this task.")
+        return redirect('supervisor_dashboard')
+
+    task.status = 'Approved'
+    task.save()
+
+    # Send email notification
+    subject = "Your Weekly Task Has Been Approved"
+    message = f"Hi {task.contract.student.user.get_full_name()},\n\nYour weekly task for Week {task.week_num} has been approved by your supervisor."
+    send_task_email(task, subject, message)
+
+    messages.success(request, "Task approved and email sent to student.")
+    return redirect('supervisor_dashboard')
+
+@require_POST
+@login_required
+def reject_weeklytask(request, task_id):
+    task = get_object_or_404(weeklytask, pk=task_id)
+    if request.user != task.contract.student.supervisor.user:
+        messages.error(request, "You are not authorized to reject this task.")
+        return redirect('supervisor_dashboard')
+
+    task.status = 'Rejected'
+    task.save()
+
+    # Send email notification
+    subject = "Your Weekly Task Has Been Rejected"
+    message = f"Hi {task.contract.student.user.get_full_name()},\n\nYour weekly task for Week {task.week_num} has been rejected by your supervisor.\nPlease review and resubmit."
+    send_task_email(task, subject, message)
+
+    messages.warning(request, "Task rejected and email sent to student.")
+    return redirect('supervisor_dashboard')
+
+def send_task_email(task, subject, message):
+    student_email = task.contract.student.user.email
+    send_mail(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,  # django default will customize later
+        [student_email],
+        fail_silently=False
+    )

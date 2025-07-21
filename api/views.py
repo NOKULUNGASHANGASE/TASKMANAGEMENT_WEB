@@ -8,6 +8,7 @@ from Tasks.google_calendar import create_task
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth.models import User
+from django.views.decorators.csrf import csrf_exempt
 
 
 
@@ -93,6 +94,27 @@ def user_task_summary(request, email):
     }
     
     return JsonResponse(data)
+
+def assigned_tasks(request):
+    tasks = Task.objects.filter(assigned_to=request.user, status='PENDING')
+    data = {
+        "tasks": [{
+            "id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "due_date": task.due_date.strftime("%Y-%m-%d"),
+        } for task in tasks]
+    }
+    return JsonResponse(data)
+
+@csrf_exempt
+def complete_task(request, task_id):
+    if request.method == "POST":
+        task = Task.objects.get(id=task_id, assigned_to=request.user)
+        task.status = "COMPLETED"
+        task.save()
+        return JsonResponse({"success": True})
+    return JsonResponse({"error": "Invalid request"}, status=400)
 
 
 

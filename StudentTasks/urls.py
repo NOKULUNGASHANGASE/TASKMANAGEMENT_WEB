@@ -23,12 +23,11 @@ urlpatterns = [
 
     # Task URLs
     path('contract/<int:contract_id>/weeklytasks/', views.weeklytask_list, name='weeklytask_list'),
-    #path('contracts/<int:contract_id>/weeklytasks/', views.weeklytask_list, name='weeklytask_list'),
+
     path('weeklytask_create/<int:contract_id>/', views.weeklytask_create, name='weeklytask_create'),
-    #path('weeklytask_detail/<int:pk>/', views.weeklytask_detail, name='weeklytask_detail'),
-    #path('weeklytask_update/<int:pk>/', views.weeklytask_update, name='weeklytask_update'),
-    #path('weeklytask_delete/<int:pk>/', views.weeklytask_delete, name='weeklytask_delete'),
-    
-    
+  
+    path('supervisor_dashboard/', views.supervisor_dashboard, name='supervisor_dashboard'),
+    path('approve_weeklytask/<int:task_id>/', views.approve_weeklytask, name='approve_weeklytask'),
+    path('reject_weeklytask/<int:task_id>/', views.reject_weeklytask, name='reject_weeklytask'),
     
 ]

@@ -26,6 +26,8 @@ class Task(models.Model):
     reminder_time = models.DateTimeField(default=timezone.now)
     reminder_sent = models.BooleanField(default=False)
     status = models.CharField(max_length=50,default="Pending")
+    assigned_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='assigned_tasks')
+    assigned_to_student = models.ForeignKey(Student, null=True, blank=True, on_delete=models.SET_NULL, related_name='student_tasks')
     #def clean(self):
         #if self.reminder_time>= self.due_date:
            # raise ValidationError("Reminder time must be before the due date.")

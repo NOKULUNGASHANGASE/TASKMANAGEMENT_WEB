@@ -1,0 +1,53 @@
+{% extends 'Tasks/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Supervisor Dashboard</h2>
+    <hr>
+
+    <h4>Pending Weekly Tasks</h4>
+    {% if tasks %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped mt-3">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Student</th>
+                        <th>Week #</th>
+                        <th>Date</th>
+                        <th>Title</th>
+                        <th>Hours</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                        <td>{{ task.contract.student.user.get_full_name }}</td>
+                        <td>{{ task.week_num }}</td>
+                        <td>{{ task.date }}</td>
+                        <td>{{ task.title }}</td>
+                        <td>{{ task.hours_spent }}</td>
+                        <td>
+                            <span class="badge bg-warning text-dark">{{ task.status }}</span>
+                        </td>
+                        <td>
+                            <form method="POST" action="{% url 'approve_task' task.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                            </form>
+                            <form method="POST" action="{% url 'reject_task' task.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-muted">No pending weekly tasks at the moment.</p>
+    {% endif %}
+</div>
+{% endblock %}

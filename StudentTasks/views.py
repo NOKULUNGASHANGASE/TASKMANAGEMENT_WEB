@@ -8,6 +8,7 @@ from django.template.defaultfilters import date
 from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from StudentTasks.emailing import send_task_email
 from .models import Contract, weeklytask
 from .forms import ContractForm, weeklytaskForm
 from datetime import timedelta
@@ -15,18 +16,20 @@ from django.core.mail import send_mail
 from collections import defaultdict
 from django.core.exceptions import PermissionDenied
 from Management.models import Student, Supervisor
-from Tasks.models import Task
+from Tasks.models import Task, YearPlan
 from django.views.decorators.http import require_POST
 import datetime
 import json
 from django.conf import settings
+from StudentTasks import emailing
 
 
 
 @login_required
 def student_tasks_home(request):
     contract = Contract.objects.filter(student=request.user).first()
-
+    student = get_object_or_404(Student, user=request.user)
+    # student = Student.objects.get(user=request.user)
     if not contract:
         return render(request, 'StudentTasks/home.html')
 
@@ -34,13 +37,17 @@ def student_tasks_home(request):
     total_weeks = ((contract.end_date - contract.start_date).days // 7) + 1
 
     # All submitted week numbers for this contract
-    submitted_week_nums = weeklytask.objects.filter(contract=contract).values_list('week_num', flat=True)
+    #submitted_week_nums = weeklytask.objects.filter(contract=contract).values_list('week_num', flat=True)
+    submitted_week_nums = set(
+        weeklytask.objects.filter(contract=contract)
+        .values_list('week_num', flat=True)
+    )
 
     # Calculate progress based on weeks submitted
     submitted_weeks_count = len(set(submitted_week_nums))
     submission_progress = (submitted_weeks_count / total_weeks) * 100 if total_weeks > 0 else 0
 
-    # Find overdue weeks with no submission
+    # Find overdue weeks with no submission for the student
     overdue_weeks = []
     for week_num in range(1, total_weeks + 1):
         week_start = contract.start_date + timedelta(days=(week_num - 1) * 7)
@@ -53,33 +60,42 @@ def student_tasks_home(request):
                 'start_date': week_start,
                 'end_date': week_end
             })
-        
+    #last updated task  
     last_task = weeklytask.objects.filter(contract=contract).order_by('-date').first()    
-    
+    #list of tasks assigned to student not yet completed
     due_tasks = Task.objects.filter(
-        user=request.user,
+        student=student,
         datecomplited__isnull=True,
         due_date__lte=timezone.now().date()
     ).order_by('due_date')
+    all_tasks = Task.objects.filter(student=student).order_by('-due_date')
 
+
+     # Completed tasks
+    completed_tasks = Task.objects.filter(
+        student=student,
+        datecomplited__isnull=False
+    ).order_by('-datecomplited')
+    #year plan calender
+    plans = YearPlan.objects.filter(student=request.user)
+    
     week_labels = []
     expected_submissions = []
     actual_submissions = []
-
+    week_labels = [f"Week {i}" for i in range(1, total_weeks + 1)]
     for week_num in range(1, total_weeks + 1):
-        week_labels.append(f"Week {week_num}")
         expected_submissions.append(1)
         actual_submissions.append(1 if week_num in submitted_week_nums else 0)
-
+    #calender events
     events = [{
-            'title': task.title,
-            'start': task.due_date.isoformat(),  # Format as ISO string (YYYY-MM-DD)
-            'end': (task.due_date + timedelta(days=1)).isoformat(),
-            'is_overdue': task.is_overdue,
-            'status': task.status,
-            'task_id': task.id,
-            'className': 'task-overdue' if task.is_overdue else 'task-due'
-        } for task in due_tasks]
+        'title': task.title,
+        'start': task.due_date.isoformat(),
+        'end': (task.due_date + timedelta(days=1)).isoformat(),
+        'is_overdue': task.due_date.date() < today and task.datecomplited is None,
+        'status': task.status,
+        'task_id': task.id,
+        'className': 'task-overdue' if task.due_date.date() < today and task.datecomplited is None else 'task-due'
+    } for task in due_tasks]
 
     
         
@@ -92,40 +108,20 @@ def student_tasks_home(request):
         'submitted_weeks': submitted_weeks_count,
         'overdue_weeks': overdue_weeks,
         'last_task': last_task,
+        'all_tasks': all_tasks,
+        'completed_tasks': completed_tasks,
         'due_tasks': due_tasks,
         'events': events,
         'week_labels': week_labels,
         'expected_submissions': expected_submissions,
         'actual_submissions': actual_submissions,
+        'plans':plans
         
     }
     return render(request, 'StudentTasks/home.html', context)
 
 
-@login_required
-def supervisor_dashboard(request):
-    # Ensure the logged-in user is a supervisor
-    try:
-        supervisor = Supervisor.objects.get(user=request.user)
-    except Supervisor.DoesNotExist:
-        messages.error(request, "You are not authorized to view this page.")
-        return redirect('home')  # or raise PermissionDenied
 
-    # Get all students under this supervisor
-    students = Student.objects.filter(supervisor=supervisor)
-
-    # Get all pending weekly tasks from these students
-    tasks = weeklytask.objects.filter(
-        contract__student__in=students,
-        status='Pending'
-    ).select_related('contract', 'contract__student').order_by('-date')
-
-    context = {
-        'students': students,
-        'tasks': tasks,
-    }
-
-    return render(request, 'StudentTasks/dashboard.html', context)
 
 @login_required
 def contract_list(request):
@@ -216,7 +212,7 @@ def approve_weeklytask(request, task_id):
     task = get_object_or_404(weeklytask, pk=task_id)
     if request.user != task.contract.student.supervisor.user:
         messages.error(request, "You are not authorized to approve this task.")
-        return redirect('supervisor_dashboard')
+        return redirect('Tasks:supervisor_dashboard')
 
     task.status = 'Approved'
     task.save()
@@ -227,7 +223,7 @@ def approve_weeklytask(request, task_id):
     send_task_email(task, subject, message)
 
     messages.success(request, "Task approved and email sent to student.")
-    return redirect('supervisor_dashboard')
+    return redirect('Tasks:supervisor_dashboard')
 
 @require_POST
 @login_required
@@ -235,25 +231,16 @@ def reject_weeklytask(request, task_id):
     task = get_object_or_404(weeklytask, pk=task_id)
     if request.user != task.contract.student.supervisor.user:
         messages.error(request, "You are not authorized to reject this task.")
-        return redirect('supervisor_dashboard')
+        return redirect('Tasks:supervisor_dashboard')
 
     task.status = 'Rejected'
     task.save()
 
-    # Send email notification
+    # Send email notification to student after the supervisor aprouve or reject
     subject = "Your Weekly Task Has Been Rejected"
     message = f"Hi {task.contract.student.user.get_full_name()},\n\nYour weekly task for Week {task.week_num} has been rejected by your supervisor.\nPlease review and resubmit."
     send_task_email(task, subject, message)
 
     messages.warning(request, "Task rejected and email sent to student.")
-    return redirect('supervisor_dashboard')
+    return redirect('Tasks:supervisor_dashboard')
 
-def send_task_email(task, subject, message):
-    student_email = task.contract.student.user.email
-    send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,  # django default will customize later
-        [student_email],
-        fail_silently=False
-    )

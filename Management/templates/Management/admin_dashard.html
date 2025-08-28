@@ -1,0 +1,99 @@
+{% extends 'Tasks/base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Admin Dashboard</h2>
+    
+   <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Supervisors</h4>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'create_supervisor' %}" class="btn btn-success mb-3"> Create new Supervisor</a>
+                    <ul class="list-group">
+                        {% for supervisor in supervisors %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                {{ supervisor.user.get_full_name }}
+                                <span class="badge bg-{{ supervisor.status|yesno:'success,secondary' }}">
+                                    {{ supervisor.get_status_display }}
+                                </span>
+                            </div>
+                            {% if supervisor.id %}
+                                <a href="{% url 'assign_students' supervisor.id %}" class="btn btn-sm btn-primary">Assign Students</a>
+                            {% else %}
+                                <span class="text-muted"></span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+         <!-- unassogned number of Students -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Unassigned Students ({{ unassigned_students.count }})</h4>
+                </div>
+                <div class="card-body">
+                    {% if unassigned_students %}
+                    <ul class="list-group">
+                        {% for student in unassigned_students %}
+                        <li class="list-group-item">
+                            {{ student.user.get_full_name }} - {{ student.student_id }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p>All students are assigned to supervisors.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+    <div class="card">
+        <div class="card-header">
+            <h4>Assign Students to Supervisor</h4>
+        </div>
+        <div class="card-body">
+            {% if unassigned_students %}
+            <form method="post" action="{% url 'dashboard_assign_students' %}">
+                {% csrf_token %}
+
+                <!-- Supervisor dropdown -->
+                <div class="mb-3">
+                    <label for="supervisorSelect" class="form-label">Select Supervisor</label>
+                    <select class="form-select" name="supervisor_id" id="supervisorSelect" required>
+                        <option value="">-- Choose Supervisor --</option>
+                        {% for supervisor in supervisors %}
+                            <option value="{{ supervisor.id }}">{{ supervisor.user.get_full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Students multiselect -->
+                <div class="mb-3">
+                    <label for="studentsSelect" class="form-label">Select Students</label>
+                    <select multiple class="form-select" name="students" id="studentsSelect" required size="8">
+                        {% for student in unassigned_students %}
+                            <option value="{{ student.id }}">{{ student.user.get_full_name }} ({{ student.student_id }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Assign Selected Students</button>
+            </form>
+            {% else %}
+                <p>All students are assigned to supervisors.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+</div>
+
+{% endblock %}

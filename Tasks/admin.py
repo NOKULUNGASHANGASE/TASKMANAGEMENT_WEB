@@ -8,5 +8,6 @@ class tasksadmin(admin.ModelAdmin):
     
     
 admin.site.register(Task, tasksadmin )
+admin.site.register( YearPlan)
 
-# Register your models here.
+

@@ -1,0 +1,35 @@
+{% extends 'Tasks/base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Create New Supervisor</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            {{ form.first_name.label_tag }}
+            {{ form.first_name }}
+        </div>
+        <div class="mb-3">
+            {{ form.last_name.label_tag }}
+            {{ form.last_name }}
+        </div>
+        <div class="mb-3">
+            {{ form.email.label_tag }}
+            {{ form.email }}
+        </div>
+        <div class="mb-3">
+            {{ form.password1.label_tag }}
+            {{ form.password1 }}
+        </div>
+        <div class="mb-3">
+            {{ form.password2.label_tag }}
+            {{ form.password2 }}
+        </div>
+        <div class="mb-3">
+            {{ form.students.label_tag }}
+            {{ form.students }}
+        </div>
+        <button type="submit" class="btn btn-primary">Create Supervisor</button>
+    </form>
+</div>
+{% endblock %}

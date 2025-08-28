@@ -1,0 +1,640 @@
+{% extends 'Tasks/base.html' %}
+
+{% block content %}
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- FullCalendar CSS -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+    <style>
+        :root {
+            --sidebar-width: 250px;
+            --sidebar-bg: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            --sidebar-active: rgba(255, 255, 255, 0.1);
+            --content-bg: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--content-bg);
+            overflow-x: hidden;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            min-height: 100vh;
+            background: var(--sidebar-bg);
+            color: white;
+            position: fixed;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-nav {
+            padding: 0;
+            list-style: none;
+        }
+        
+        .sidebar-nav li {
+            padding: 12px 20px;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .sidebar-nav li:hover {
+            background: var(--sidebar-active);
+        }
+        
+        .sidebar-nav li.active {
+            background: var(--sidebar-active);
+            border-left: 3px solid white;
+        }
+        
+        .sidebar-nav a {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+        
+        .sidebar-nav i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        
+        /* Cards */
+        .stat-card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        /* Task status badges */
+        .badge-pending {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        .badge-approved {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .badge-rejected {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .badge-completed {
+            background-color: #17a2b8;
+            color: white;
+        }
+        
+        /* Mobile Styles */
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        
+        /* Activity Log */
+        .activity-item {
+            border-left: 3px solid #3b82f6;
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .activity-time {
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+        
+        /* Calendar styles */
+        #calendar {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .fc-event {
+            cursor: pointer;
+        }
+        
+        .task-overdue {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+        
+        .task-due {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+        }
+    </style>
+    
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3 class="mb-0">Supervisor Panel</h3>
+            <button class="btn btn-sm btn-outline-light d-lg-none mt-2 sidebar-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <ul class="sidebar-nav">
+            <li class="active">
+                <a href="{% url 'supervisor_dashboard' %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'supervisor_assign_task' %}" 
+                    class="btn btn-sm btn-info" 
+                    title="Assign Task">
+                    <i class="fas fa-tasks"></i>
+                    <span>Assign Tasks</span>
+                </a>
+            </li>
+            <li>
+                {% for student in students %}
+                 <li>
+                    <a href="{% url 'create_year_plan' student.id %}" 
+                    class="btn btn-sm btn-primary" 
+                    title="Create Year Plan">
+                    <i class="fas fa-calendar-alt"></i>
+                    </a>
+                 </li>
+                {% endfor %}
+            </li>
+            <li>
+                <a href="#pending-tasks">
+                    <i class="fas fa-clock"></i>
+                    <span>Approve weekly report</span>
+                </a>
+            </li>
+            <li>
+                <a href="#completed-tasks">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Completed Tasks</span>
+                </a>
+            </li>
+            <li>
+                <a href="#students">
+                    <i class="fas fa-users"></i>
+                    <span>My Students</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Supervisor Dashboard</h1>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <span class="me-3">Welcome, {{ request.user.get_full_name }}</span>
+            </div>
+        </div>
+        <!-- Messages -->
+        {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Stats Cards -->3
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="card stat-card bg-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Assigned Students</h6>
+                                <h3 class="mb-0">{{ students.count }}</h3>
+                            </div>
+                            <div class="bg-primary bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-users text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card stat-card bg-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Pending Weekly Report</h6>
+                                <h3 class="mb-0 text-warning">{{ pending_tasks.count }}</h3>
+                            </div>
+                            <div class="bg-warning bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-clock text-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card stat-card bg-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Completed Tasks</h6>
+                                <h3 class="mb-0 text-success">{{ completed_tasks.count }}</h3>
+                            </div>
+                            <div class="bg-success bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-check-circle text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card stat-card bg-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Overdue Tasks</h6>
+                                <h3 class="mb-0 text-danger">{{ overdue_tasks.count }}</h3>
+                            </div>
+                            <div class="bg-danger bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-exclamation-circle text-danger"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Tasks Section -->
+        <div class="card mb-4" id="pending-tasks">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Pending Weekly Report for Approval</h5>
+                <a href="{% url 'supervisor_assign_task' %}" 
+                    class="btn btn-sm btn-info" 
+                    title="Assign Task">
+                    <i class="fas fa-tasks"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                {% if tasks %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Week</th>
+                                <th>Task</th>
+                                <th>Hours</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in tasks %}
+                            <tr>
+                                <td>{{ task.contract.student.get_full_name }}</td>
+                                <td>Week {{ task.week_num }}</td>
+                                <td>{{ task.description|truncatechars:50 }}</td>
+                                <td>{{ task.hours_spent }}</td>
+                                <td>
+                                    <span class="badge badge-pending">{{ task.get_status_display }}</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <form method="post" action="{% url 'approve_weeklytask' task.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-success">
+                                                <i class="fas fa-check">Approve</i> 
+                                            </button>
+                                        </form>
+                                        <form method="post" action="{% url 'reject_weeklytask' task.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-times">Reject</i> 
+                                            </button>
+                                        </form>
+                                        <a href="#" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#taskModal{{ task.id }}">
+                                            <i class="fas fa-eye">View</i> 
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            
+                            <!-- Task Detail Modal -->
+                            <div class="modal fade" id="taskModal{{ task.id }}" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="taskModalLabel">Task Details - Week {{ task.week_num }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p><strong>Student:</strong> {{ task.contract.student.get_full_name }}</p>
+                                            <p><strong>Week Number:</strong> {{ task.week_num }}</p>
+                                            <p><strong>Date:</strong> {{ task.date }}</p>
+                                            <p><strong>Hours Spent:</strong> {{ task.hours_spent }}</p>
+                                            <p><strong>Description:</strong></p>
+                                            <div class="border p-2">{{ task.description }}</div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <form method="post" action="{% url 'approve_weeklytask' task.id %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-success">
+                                                    <i class="fas fa-check"></i> Approve
+                                                </button>
+                                            </form>
+                                            <form method="post" action="{% url 'reject_weeklytask' task.id %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger">
+                                                    <i class="fas fa-times"></i> Reject
+                                                </button>
+                                            </form>
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-success mb-0">
+                    <i class="fas fa-check-circle me-2"></i> No pending tasks for approval.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Student Progress Section -->
+        <div class="row mb-4">
+            <div class="col-lg-6 mb-4" id="students">
+                <div class="card h-100">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">My Students</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if students %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Progress</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for student in students %}
+                                    <tr>
+                                        <td>{{ student.user.get_full_name }}</td>
+                                        <td>{{ student.user.email }}</td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar bg-success" role="progressbar" 
+                                                    style="width: {{ student.progress_percentage }}%;" 
+                                                    aria-valuenow="{{ student.progress_percentage }}" 
+                                                    aria-valuemin="0" 
+                                                    aria-valuemax="100">
+                                                    {{ student.progress_percentage }}%
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% for student in students %}
+                                                <li>
+                                                    <a href="{% url 'create_year_plan' student.id %}" 
+                                                    class="btn btn-sm btn-primary" 
+                                                    title="Create Year Plan">
+                                                    <i class="fas fa-calendar-alt"></i>
+                                                    </a>
+                                                </li>
+                                            {% endfor %}
+                                            <a href="{% url 'supervisor_assign_task' %}" 
+                                                class="btn btn-sm btn-info" 
+                                                title="Assign Task">
+                                                <i class="fas fa-tasks"></i>
+                                            </a>
+
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning mb-0">
+                            <i class="fas fa-exclamation-circle me-2"></i> No students assigned to you.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Tasks Calendar</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="calendar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed Tasks Section -->
+        <div class="card mb-4" id="completed-tasks">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Recently Completed Tasks</h5>
+            </div>
+            <div class="card-body">
+                {% if completed_tasks %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Task</th>
+                                <th>Completed On</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in completed_tasks|slice:":5" %}
+                            <tr>
+                                <td>{{ task.contract.student.user.get_full_name }}</td>
+                                <td>{{ task.description|truncatechars:50 }}</td>
+                                <td>{{ task.datecomplited|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if task.status == 'Approved' %}
+                                        <span class="badge badge-approved">Approved</span>
+                                    {% elif task.status == 'Rejected' %}
+                                        <span class="badge badge-rejected">Rejected</span>
+                                    {% else %}
+                                        <span class="badge badge-completed">Completed</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="#" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#completedTaskModal{{ task.id }}">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            
+                            <!-- Completed Task Detail Modal -->
+                            <div class="modal fade" id="completedTaskModal{{ task.id }}" tabindex="-1" aria-labelledby="completedTaskModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="completedTaskModalLabel">Task Details</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p><strong>Student:</strong> {{ task.contract.student.get_full_name }}</p>
+                                            <p><strong>Week Number:</strong> {{ task.week_num }}</p>
+                                            <p><strong>Completed On:</strong> {{ task.datecomplited|date:"M d, Y" }}</p>
+                                            <p><strong>Hours Spent:</strong> {{ task.hours_spent }}</p>
+                                            <p><strong>Status:</strong> 
+                                                {% if task.status == 'Approved' %}
+                                                    <span class="badge badge-approved">Approved</span>
+                                                {% elif task.status == 'Rejected' %}
+                                                    <span class="badge badge-rejected">Rejected</span>
+                                                {% else %}
+                                                    <span class="badge badge-completed">Completed</span>
+                                                {% endif %}
+                                            </p>
+                                            <p><strong>Description:</strong></p>
+                                            <div class="border p-2">{{ task.description }}</div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% if completed_tasks.count > 5 %}
+                    <div class="text-center mt-2">
+                        <a href="#" class="btn btn-sm btn-outline-secondary">
+                            View All Completed Tasks ({{ completed_tasks.count }})
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-2"></i> No completed tasks yet.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- FullCalendar JS -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+    <!-- Custom JS -->
+    <script>
+        // Toggle sidebar on mobile
+        document.querySelector('.sidebar-toggle').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('open');
+        });
+        
+        // Initialize calendar
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                events: [
+                    {% for task in all_tasks %}
+                    {
+                        title: '{{ task.contract.student.user.get_full_name }} - {{ task.description|truncatechars:20 }}',
+                        start: '{{ task.date|date:"Y-m-d" }}',
+                        end: '{{ task.date|date:"Y-m-d" }}',
+                        color: '{% if task.status == "Approved" %}#28a745{% elif task.status == "Rejected" %}#dc3545{% else %}#17a2b8{% endif %}',
+                        extendedProps: {
+                            student: '{{ task.contract.student.get_full_name }}',
+                            description: '{{ task.description }}',
+                            status: '{{ task.status }}'
+                        }
+                    },
+                    {% endfor %}
+                ],
+                eventClick: function(info) {
+                    alert(
+                        'Student: ' + info.event.extendedProps.student + '\n' +
+                        'Task: ' + info.event.extendedProps.description + '\n' +
+                        'Status: ' + info.event.extendedProps.status
+                    );
+                }
+            });
+            calendar.render();
+        });
+        
+        // Auto-refresh dashboard every 60 seconds
+        function refreshDashboard() {
+            fetch(window.location.href, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const newDoc = parser.parseFromString(html, 'text/html');
+                const newContent = newDoc.querySelector('.main-content').innerHTML;
+                document.querySelector('.main-content').innerHTML = newContent;
+            });
+        }
+        
+        // Uncomment to enable auto-refresh
+        // setInterval(refreshDashboard, 60000);
+    </script>
+</body>
+</html>
+

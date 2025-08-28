@@ -1,0 +1,31 @@
+{% extends 'Tasks/base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Assign Students to {{ supervisor.user.get_full_name }}</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-6">
+                <h4>Available Students</h4>
+                <select name="students" multiple class="form-control" size="10">
+                    {% for student in available_students %}
+                    <option value="{{ student.id }}">{{ student.user.get_full_name }} - {{ student.student_id }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <h4>Currently Assigned</h4>
+                <ul class="list-group">
+                    {% for student in assigned_students %}
+                    <li class="list-group-item">{{ student.user.get_full_name }} - {{ student.student_id }}</li>
+                    {% empty %}
+                    <li class="list-group-item">No students assigned</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Save Assignments</button>
+    </form>
+</div>
+{% endblock %}

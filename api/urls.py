@@ -4,6 +4,7 @@ from .views import TaskViewSet
 from . import views
 
 
+
 router = DefaultRouter()
 router.register(r'tasks', TaskViewSet)
 
@@ -19,4 +20,7 @@ urlpatterns = [
     path('user-task-summary/<str:email>', views.user_task_summary, name='user-task-summary'),
     path('assigned/', views.assigned_tasks, name='assigned_tasks'),
     path('complete/<int:task_id>/', views.complete_task, name='complete_task'),
+    path('year-plan-events/', views.year_plan_events_json, name='year_plan_events_json'),
+    path('year_plan_events_api/', views.year_plan_events_api, name='year_plan_events_api'),
+
 ]

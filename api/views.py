@@ -1,3 +1,4 @@
+from datetime import timedelta, timezone
 from django.shortcuts import render
 from rest_framework import viewsets
 from Tasks.models import Task
@@ -9,7 +10,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
-
+import json
+from Management.models import Student
+from Tasks.models import YearPlan
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -103,19 +111,58 @@ def assigned_tasks(request):
             "title": task.title,
             "description": task.description,
             "due_date": task.due_date.strftime("%Y-%m-%d"),
+            "status": task.status,
         } for task in tasks]
     }
     return JsonResponse(data)
 
 @csrf_exempt
+@require_POST
+@login_required
 def complete_task(request, task_id):
-    if request.method == "POST":
-        task = Task.objects.get(id=task_id, assigned_to=request.user)
+    try:
+        task = get_object_or_404(Task, id=task_id, assigned_to=request.user)
         task.status = "COMPLETED"
+        task.datecomplited = timezone.now()
         task.save()
-        return JsonResponse({"success": True})
-    return JsonResponse({"error": "Invalid request"}, status=400)
+        return JsonResponse({"success": True, "message": "Task completed."})
+    except Task.DoesNotExist:
+        return JsonResponse({"error": "Task not found."}, status=404)
+
+@login_required
+def year_plan_events_json(request):
+    plans = YearPlan.objects.filter(student=request.user)
+    events = []
+
+    for plan in plans:
+        events.append({
+            "title": plan.title,
+            "start": plan.start_date.isoformat(),
+            "end": plan.end_date.isoformat(),
+            "description": plan.description,
+        })
+
+    return JsonResponse(events, safe=False)
 
 
+
+@login_required
+@require_GET
+def year_plan_events_api(request):
+    student = get_object_or_404(Student, user=request.user)
+    plans = YearPlan.objects.filter(student=student.user)  
+    #plans = YearPlan.objects.filter(student=student)
+
+    events = []
+    for plan in plans:
+        events.append({
+            'id': plan.id,
+            'title': plan.title,
+            'start': plan.start_date.isoformat(),
+            'end': (plan.end_date + timedelta(days=1)).isoformat(),  
+            'description': plan.description,
+        })
+
+    return JsonResponse(events, safe=False)
 
     

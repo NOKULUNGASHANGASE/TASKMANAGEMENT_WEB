@@ -10,6 +10,7 @@ from django.contrib import messages
 from celery import shared_task
 from django.utils import timezone
 from .models import Task
+from django.conf import settings
 
 
 
@@ -48,7 +49,6 @@ def activate(request, uidb64, token):
     
     return redirect('home')
         
-
 
 @shared_task
 def send_task_reminders():

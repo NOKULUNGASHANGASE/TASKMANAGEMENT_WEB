@@ -96,4 +96,18 @@
                     </div>
         </main>
      </html>
-{% endblock %}
+
+      <!-- Completed Tasks -->
+    <div class="col-md-4 mb-4">
+      <h5>Completed Tasks</h5>
+      <ul class="list-group">
+        {% for task in completed_tasks %}
+        <li class="list-group-item">
+          {{ task.title }} - completed on {{ task.datecomplited|date:"M d, Y" }}
+        </li>
+        {% empty %}
+        <li class="list-group-item text-muted">No completed tasks yet.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>

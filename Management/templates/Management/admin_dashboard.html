@@ -1,0 +1,441 @@
+{% extends 'Tasks/base.html' %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --sidebar-width: 250px;
+            --sidebar-bg: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            --sidebar-active: rgba(255, 255, 255, 0.1);
+            --content-bg: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--content-bg);
+            overflow-x: hidden;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            min-height: 100vh;
+            background: var(--sidebar-bg);
+            color: white;
+            position: fixed;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-nav {
+            padding: 0;
+            list-style: none;
+        }
+        
+        .sidebar-nav li {
+            padding: 12px 20px;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .sidebar-nav li:hover {
+            background: var(--sidebar-active);
+        }
+        
+        .sidebar-nav li.active {
+            background: var(--sidebar-active);
+            border-left: 3px solid white;
+        }
+        
+        .sidebar-nav a {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+        
+        .sidebar-nav i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        
+        /* Cards */
+        .stat-card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        /* Mobile Styles */
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        
+        /* Activity Log */
+        .activity-item {
+            border-left: 3px solid #3b82f6;
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .activity-time {
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3 class="mb-0">Admin Panel</h3>
+            <button class="btn btn-sm btn-outline-light d-lg-none mt-2 sidebar-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <ul class="sidebar-nav">
+            <li class="active">
+                <a href="{% url 'admin_dashboard' %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'create_supervisor' %}">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Create Supervisor</span>
+                </a>
+            
+            </li>
+           
+            <li>
+                <a href="#">
+                    <i class="fas fa-users"></i>
+                    <span>Student Management</span>
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <i class="fas fa-tasks"></i>
+                    <span>Task Management</span>
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Reports</span>
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        
+
+        <!-- Messages -->
+        {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Stats Cards -->
+        <div class="row mb-4">
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card stat-card bg-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Total Students</h6>
+                                <h3 class="mb-0">{{ total_students }}</h3>
+                            </div>
+                            <div class="bg-primary bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-users text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card stat-card bg-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Unassigned Students</h6>
+                                <h3 class="mb-0 text-warning">{{ unassigned_students.count }}</h3>
+                            </div>
+                            <div class="bg-warning bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-user-times text-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card stat-card bg-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Supervisors</h6>
+                                <h3 class="mb-0">{{ supervisors.count }}</h3>
+                            </div>
+                            <div class="bg-success bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-user-tie text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card stat-card bg-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Tasks Submitted</h6>
+                                <h3 class="mb-0">{{ completed_tasks_count }}</h3>
+                            </div>
+                            <div class="bg-info bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-tasks text-info"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Row -->
+        <div class="row mb-4">
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold">Supervisor Management</h6>
+                            <a href="{% url 'create_supervisor' %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-plus me-1"></i> Create New
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Students</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for supervisor in active_supervisors %}
+                                    <tr>
+                                        <td>{{ supervisor.user.get_full_name }}</td>
+                                        <td>{{ supervisor.user.email }}</td>
+                                        <td>{{ supervisor.student_set.count }}</td>
+                                        <td>
+                                            {% if supervisor.id %}
+                                                <a href="{% url 'assign_students' supervisor.id %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-user-edit"></i> Assign
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted">No ID</span>
+                                            {% endif %}
+                                                <i class="fas fa-user-edit"></i> Assign
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No active supervisors found</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-white">
+                        <h6 class="m-0 font-weight-bold">Unassigned Students</h6>
+                    </div>
+                    <div class="card-body">
+                        {% if unassigned_students %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Program</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for student in unassigned_students|slice:":5" %}
+                                    <tr>
+                                        <td>{{ student.user.get_full_name }}</td>
+                                        <td>{{ student.user.email }}</td>
+                                        <td>{{ student.program }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {% if unassigned_students.count > 5 %}
+                            <div class="text-center mt-2">
+                                <a href="#" class="btn btn-sm btn-outline-secondary">
+                                    View All ({{ unassigned_students.count }})
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <div class="alert alert-success mb-0">
+                            <i class="fas fa-check-circle me-2"></i> All students are assigned to supervisors.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h6 class="m-0 font-weight-bold">Recent Activity</h6>
+            </div>
+            <div class="card-body">
+                {% if recent_activities %}
+                <div class="timeline">
+                    {% for activity in recent_activities %}
+                    <div class="activity-item">
+                        <p class="mb-1">{{ activity.description }}</p>
+                        <small class="activity-time">
+                            <i class="far fa-clock me-1"></i> {{ activity.timestamp|timesince }} ago
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No recent activities found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <h6 class="m-0 font-weight-bold">Task Submission Overview</h6>
+        </div>
+        <div class="card-body">
+            <canvas id="taskChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+{% endblock %}
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Toggle sidebar on mobile
+        document.querySelector('.sidebar-toggle').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('open');
+        });
+        
+        // Auto-refresh dashboard every 60 seconds
+        function refreshDashboard() {
+            fetch(window.location.href, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const newDoc = parser.parseFromString(html, 'text/html');
+                const newContent = newDoc.querySelector('.main-content').innerHTML;
+                document.querySelector('.main-content').innerHTML = newContent;
+            });
+        }
+        
+        // Uncomment to enable auto-refresh
+        // setInterval(refreshDashboard, 60000);
+        
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+        const ctx = document.getElementById('taskChart').getContext('2d');
+        const taskChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'Submitted Tasks',
+                    data: [12, 19, 7, 15],  // replace with Django context data later
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

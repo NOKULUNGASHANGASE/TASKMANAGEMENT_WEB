@@ -679,5 +679,69 @@ const userEmail = 'nokulunga08@gmail.com';
                 }
             }
 
+ <nav class="navbar">
+              <div class="navbar-logo">
+                <a href="#">Tasks management</a>  
+                </div>
+                {% if request.user.supervisor %}
+            
+                    <a href="{% url 'supervisor_dashboard' %}" class="btn btn-outline-primary">Dashboard</a>
+                {% endif %}
 
- 
+                {% if user.is_authenticated %}
+                  
+                  <ul class="navbar-links">
+                  <li><a href="{% url 'supervisor_dashboard'%}">Task Management</a></li>
+                 
+                  <li><a href="{% url 'StudentTasks:student_tasks_home' %}">Student Tasks Tracking</a></li>
+                  
+             <br>
+                <a>Logged In as {{ user.username }}</a>
+                <form action="{% url 'logoutuser' %}" method="POST">
+                    {% csrf_token %}
+                    <a><button type="submit">Logout</button></a>
+                  </div>
+                </form>
+                
+  
+            {% else %}
+
+              
+            <li><a href="{% url 'signupuser' %}" >Sign Up</a></li>
+            <li><a href="{% url 'supervisor_signup' %}">Supervisor Signup</a></li>
+
+
+            <li><a href="{% url 'loginuser' %}" >Login</a></li>
+
+            <li><a href="{% url 'loginuser' %}" >About</a></li>
+              </ul>
+            
+           {% endif %}
+          </nav>
+          <button class="theme-toggle" id="themeButton">🌓 Toggle Theme</button>
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>  
+      </div>
+ eventClick: function(info) {
+
+                    const event = allEventsData.find(e => e.id === info.event.id);   // the event click must find the event details from our stored data.
+                    // Open modal and display event details in the same page this ,ust show on the highlighted periods that has been set by supervisor
+                    modalTitle.textContent = info.event.title;
+                    modalStartDate.textContent = new Date(event.start).toLocaleDateString();
+                    
+                    const endDate = event.end ? new Date(event.end) : new Date(event.start);
+                  
+                    if (event.end && new Date (event.start).toDateString() !== endDate.toDateString()) {
+                        endDate.setDate(endDate.getDate() - 1);
+                    }
+                    modalEndDate.textContent = endDate.toLocaleDateString();
+                    modalDescription.textContent = event.description || 'No description provided.';
+                    eventModal.style.display = 'flex'; 
+                },
+                eventDidMount: function(info) {
+                 
+                    info.el.title = info.event.extendedProps.description || ''; 
+                }
+            });

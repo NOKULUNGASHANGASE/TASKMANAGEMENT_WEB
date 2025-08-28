@@ -1,0 +1,1000 @@
+{% extends 'Tasks/base.html' %}
+{% load static %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contract Dashboard - Task Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@3.2.0/dist/fullcalendar.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@3.2.0/dist/fullcalendar.min.js"></script>
+
+    <style>
+        .fc .fc-toolbar-title {
+            font-size: 1.2rem;
+        }
+        .fc th, .fc-event {
+            font-size: 0.85rem;
+            padding: 2px;
+        }
+        /* Add custom styles here (if needed) */
+        .column {
+        float: left;
+        width: 33.33%;
+        }
+
+        /* Clear floats after the columns */
+        .row:after {
+        content: "";
+        display: table;
+        clear: both;
+        }
+
+        /* Responsive layout - makes the three columns stack on top of each other instead of next to each other on smaller screens (600px wide or less) */
+        @media screen and (max-width: 600px) {
+        .column {
+            width: 100%;
+        }
+        }
+    </style>
+
+</head>
+<body>
+
+<!-- Header Section -->
+<header class="container mt-4">
+    <h2>{{ contract.title }}</h2>
+    <p>
+        <strong>Duration:</strong> {{ contract.start_date }} to {{ contract.end_date }} |
+        <strong>Progress:</strong> {{ submission_progress }}%
+    </p>
+    <hr>
+</header>
+
+<!-- Navigation Section -->
+<nav class="container mb-4">
+    <div class="d-flex justify-content-center">
+        <a href="{% url 'StudentTasks:contract_list' %}" class="btn btn-outline-primary mx-2">My Contracts</a>
+        <a href="{% url 'StudentTasks:contract_create' %}" class="btn btn-outline-success mx-2">Create a New Contract</a>
+        <a href="{% url 'StudentTasks:student_tasks_home' %}" class="btn btn-outline-info mx-2">Dashboard</a>
+        {% if contract %}
+            <a href="{% url 'StudentTasks:weeklytask_list' contract.id %}" class="btn btn-outline-success mx-2">Tasks List</a>
+        {% else %}
+            <p class="text-muted">Create a contract first</p>
+        {% endif %}
+        {% if contract %}
+            <a href="{% url 'StudentTasks:weeklytask_create' contract.id %}" class="btn btn-outline-success mx-2">Add Weekly Task</a>
+        {% else %}
+            <p class="text-muted">Create a contract first</p>
+        {%endif%}
+
+    </div>
+    <hr>
+</nav>
+
+
+
+<!-- Task Submission Progress Section -->
+{% if contract %}
+    <div class="container mt-4">
+        <h5>Weekly Task Submission Progress</h5>
+        <div class="progress mb-2">
+            <div class="progress-bar bg-info" role="progressbar" style="width:10px" 
+                 aria-valuenow="{{ submission_progress }}" aria-valuemin="0" aria-valuemax="100">
+                {{ submission_progress }}%
+            </div>
+        </div>
+        <p><strong>Weeks Submitted:</strong> {{ submitted_weeks }} of {{ total_weeks }}</p>
+    </div>
+{% endif %}
+
+<div class="dashboard-container">
+ <div class="card-scroll-cintainer">
+  <div class="card dashboard-card">
+    <!-- Last Added Task Card -->
+    <div class="card flex-shrink-0" style="min-width: 320px; max-width: 400px; scroll-snap-align: start;">
+      <div class="card-header bg-info text-white">
+        <h5>Last Added Task</h5>
+      </div>
+      <div class="card-body">
+        {% if last_task %}
+          <p><strong>Title:</strong> {{ last_task.title }}</p>
+          <p><strong>Date:</strong> {{ last_task.date }}</p>
+          <p><strong>Week Number:</strong> {{ last_task.week_num }}</p>
+          <p><strong>Status:</strong>
+            <span class="badge
+              {% if last_task.status == 'COMPLETED' %}bg-success
+              {% elif last_task.status == 'PENDING' %}bg-warning
+              {% elif last_task.status == 'rejected' %}bg-danger
+              {% else %}bg-secondary{% endif %}">
+              {{ last_task.status }}
+            </span>
+          </p>
+          <p><strong>Hours Spent:</strong> {{ last_task.hours_spent }}</p>
+          <a href="{% url 'StudentTasks:weeklytask_list' contract.id %}" class="btn btn-outline-primary btn-sm">
+            View All Tasks
+          </a>
+        {% else %}
+          <div class="alert alert-light d-flex align-items-center justify-content-center mb-0">
+            No tasks have been added yet.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+
+    <div class="card dashboard-card">
+      <div class="card-header bg-info text-white info-header">
+      <h5>Due Tasks</h5>
+      </div>
+      <div class="card-body scrollable-card-body">
+      <div class="list-group">
+        {% for task in due_tasks %}
+        <div class="list-group-item d-flex justify-content-between align-items-start">
+          <div>
+            <strong>{{ task.title }}</strong> - due {{ task.due_date|date:"M d" }}
+            {% if task.is_overdue %}<span class="text-danger">(Overdue)</span>{% endif %}
+          </div>
+          <button class="btn btn-sm btn-success" onclick="completeTask({{ task.id }})">Complete</button>
+        </div>
+        {% empty %}
+        <div class="list-group-item text-muted">No due tasks.</div>
+        {% endfor %}
+      </div>
+    </div>
+    </div>
+    </div>
+
+    
+
+
+    <!-- Due Tasks Card -->
+    <div class="card flex-shrink-0" style="min-width: 320px; max-width: 400px; scroll-snap-align: start;">
+      <div class="card-header bg-info text-white">
+        <h5 class="mb-0">Tasks to complete in your contract period ({{ due_tasks_count }})</h5>
+      </div>
+      <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+        {% if due_tasks %}
+          <div class="list-group">
+            {% for task in due_tasks %}
+              <div class="list-group-item">
+                <div class="d-flex w-100 justify-content-between">
+                  <h6 class="mb-1">{{ task.title }}</h6>
+                  <small class="{% if task.is_overdue %}text-danger{% else %}text-muted{% endif %}">
+                    {{ task.due_date|date:"M d, Y" }}
+                    {% if task.is_overdue %}(Overdue){% endif %}
+                  </small>
+                </div>
+                <p class="mb-1">{{ task.description|truncatechars:100 }}</p>
+                <small>Status: {{ task.get_status_display }}</small>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted">No tasks due at this time.</p>
+        {% endif %}
+      </div>
+    </div>  
+   
+    <div class="card dashboard-card">   
+        <div class="card-body">
+                     <div class="row g-3">
+                        <div class="col-md-12"></div>
+                            <div class="alert-box alert alert-secondary">
+                                <h6 class="alert-heading">Current Week</h6>
+                                <p class="mb-0">Week {{ current_week }} of {{ total_weeks }}</p>
+                                <p class="small mb-0 text-muted">Today: {{ today|date:"M d, Y" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                          <div class="alert-box alert alert-warning">
+                            <div class="alert {% if due_tasks_count > 0 %}alert-warning{% else %}alert-success{% endif %}">
+                                <h6 class="alert-heading">Pending Tasks</h6>
+                                <p class="mb-0">{{ tasks_count }} weekly tasks</p>
+                                <p class="mb-0">awaiting Supervisor approve</p>
+                                {% if tasks_count > 0 %}
+                                    <a href="#tasks-section" class="small">View all</a>
+                                {% endif %}
+                            </div>
+                          </div>
+                        </div>
+                    </div>
+        </div>
+    </div> 
+     <div class="row mt-4">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Weekly Progress Overview</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="progress mb-3" style="height: 20px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 65%" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100">65% Completed</div>
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 15%" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100">15% Pending</div>
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: 20%" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">20% Overdue</div>
+                    </div>
+            </div>             
+     </div>                   
+  <div class="mb-4">
+    {% if overdue_weeks %}
+    <div class="alert alert-danger">
+      <h5>Overdue Weeks — No Tasks Submitted</h5>
+      <ul class="mb-0">
+        {% for w in overdue_weeks %}
+        <li>Week {{ w.week_num }} ({{ w.start_date|date:"M d" }} - {{ w.end_date|date:"M d" }})</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% else %}
+    <div class="alert alert-success">All past weeks have submissions. Great job!</div>
+    {% endif %}
+  </div>
+</main>
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+
+<script>
+events = []
+{% for item in events %}
+
+
+        events.push({
+            'title': '{{item.title}}',
+            'start': '{{item.start}}',
+            'end':'{{item.end}}' ,
+            'is_overdue':'{{item.is_overdue}}' ,
+            'status':'{{item.status}}' ,
+            'task_id': '{{item.task_id}}',
+            'className':'{{item.className}}' ,
+        } )
+
+
+{% endfor %}
+
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    console.log("events: ",events)
+
+    var calendarEl = document.getElementById('task-calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        //events: events,
+        eventClick: function(info) {
+            window.location.href = '/tasks/' + info.event.extendedProps.task_id + '/';
+        },
+        eventClassNames: function(arg) {
+            return arg.event.extendedProps.is_overdue ? ['fc-event-overdue'] : ['fc-event-due'];
+        },
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        height: 'auto', // Fills container height (400px)
+        contentHeight: 'auto', // Prevents internal overflow
+        aspectRatio: 1.5, // Width/height ratio
+        dayMaxEvents: 3, // Show max 3 events per day
+        views: {
+            dayGridMonth: {
+                dayHeaderFormat: { weekday: 'short' } // Compact day headers
+            }
+        }
+    });
+    calendar.render();
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Fetch assigned tasks from backend
+    fetch('/tasks/assigned/')
+        .then(response => response.json())
+        .then(data => {
+            const taskContainer = document.getElementById('assigned-tasks');
+            if (data.tasks.length === 0) {
+                taskContainer.innerHTML = '<p class="text-muted">No assigned tasks.</p>';
+            } else {
+                data.tasks.forEach(task => {
+                    const taskItem = document.createElement('div');
+                    taskItem.className = 'list-group-item d-flex justify-content-between align-items-start';
+                    taskItem.innerHTML = `
+                        <div>
+                            <h6>${task.title}</h6>
+                            <p class="mb-1">${task.description}</p>
+                            <small>Due: ${task.due_date}</small>
+                        </div>
+                        <button class="btn btn-sm btn-success mark-complete" data-id="${task.id}">Mark as Completed</button>
+                    `;
+                    taskContainer.appendChild(taskItem);
+                });
+
+                // Attach click handlers
+                document.querySelectorAll('.mark-complete').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        const taskId = this.getAttribute('data-id');
+                        fetch(`/tasks/complete/${taskId}/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': getCookie('csrftoken'),
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ status: 'COMPLETED' })
+                        })
+                        .then(res => {
+                            if (res.ok) {
+                                this.parentElement.remove();
+                                alert('Task marked as completed!');
+                            } else {
+                                alert('Error completing task.');
+                            }
+                        });
+                    });
+                });
+            }
+        });
+
+    // CSRF helper
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+
+function completeTask(taskId) {
+    fetch(`/api/complete-task/${taskId}/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        alert("Task completed successfully!");
+        location.reload(); // or remove task row dynamically
+      } else {
+        alert("Error: " + data.error);
+      }
+    });
+  }
+
+
+</script>
+
+</body>
+</html>
+{% endblock %}
+ <style>
+            :root {
+                --primary: #4361ee;
+                --secondary: #3f37c9;
+                --success: #4cc9f0;
+                --warning: #f72585;
+                --light: #f8f9fa;
+                --dark: #212529;
+            }
+
+            body {
+                
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                color: #212529;
+            }
+            /* Sidebar Styling */
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                width: var(--sidebar-width);
+                background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+                color: rgb(59, 91, 229);
+                z-index: 1000;
+                box-shadow: 0 0 20px rgba(0,0,0,0.15);
+                overflow-y: auto;
+                transition: transform var(--transition-speed) ease;
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .sidebar-header {
+                padding: 20px 15px;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .sidebar-header h3 {
+                margin: 0;
+                font-weight: 600;
+                font-size: 1.5rem;
+            }
+            
+            .sidebar-toggle {
+                background: rgba(255,255,255,0.1);
+                border: 1px solid rgba(255,255,255,0.3);
+                color: rgb(87, 174, 246);
+                padding: 5px 10px;
+            }
+            
+            .sidebar-toggle:hover {
+                background: rgba(139, 151, 240, 0.2);
+            }
+            
+            .sidebar-nav {
+                padding: 15px 0;
+                list-style: none;
+                margin: 0;
+            }
+            
+            .sidebar-nav li a {
+                display: flex;
+                align-items: center;
+                padding: 12px 20px;
+                color: rgba(81, 183, 231, 0.85);
+                text-decoration: none;
+                transition: all 0.2s ease;
+                position: relative;
+                font-size: 1.05rem;
+            }
+            
+            .sidebar-nav li a:hover {
+                background: rgba(255,255,255,0.1);
+                color: rgb(92, 146, 221);
+                padding-left: 25px;
+            }
+            
+            .sidebar-nav li a.active {
+                background: rgba(255,255,255,0.15);
+                color: rgb(67, 29, 219);
+                border-left: 4px solid white;
+            }
+            
+            .sidebar-nav li a i {
+                width: 30px;
+                font-size: 1.1rem;
+                text-align: center;
+                margin-right: 12px;
+            }
+            
+            /* Main content area */
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+                transition: margin-left var(--transition-speed);
+                min-height: 100vh;
+            }
+            
+            .sidebar-open .main-content {
+                margin-left: var(--sidebar-width);
+            }
+            
+            /* Overlay for mobile */
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 999;
+                display: none;
+            }
+            
+            /* Responsive adjustments */
+            @media (min-width: 992px) {
+                .sidebar {
+                    transform: translateX(0);
+                }
+                
+                .main-content {
+                    margin-left: var(--sidebar-width);
+                }
+                
+                .sidebar-toggle {
+                    display: none;
+                }
+            }
+            
+            /* Header styling */
+            .page-header {
+                background: white;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+                margin-bottom: 30px;
+            }
+            
+            /* Cards styling */
+            .dashboard-card {
+                background: white;
+                border-radius: 10px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+                padding: 25px;
+                margin-bottom: 25px;
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+                height: 100%;
+            }
+            
+            .dashboard-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            }
+            
+            .card-title {
+                font-weight: 600;
+                color: var(--primary-color);
+                margin-bottom: 20px;
+            }
+            
+            /* Progress bar styling */
+            .progress {
+                height: 10px;
+                border-radius: 5px;
+                margin-bottom: 10px;
+            }
+            
+            .progress-bar {
+                background-color: var(--primary-color);
+            }
+
+            
+            .stat-card {
+                background: rgba(255, 255, 255, 0.25);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border-radius: 15px;
+                padding: 1.5rem;
+                color: var(--dark);
+                box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+                text-align: center;
+                transition: all 0.2s ease-in-out;
+                border: 1px solid rgba(255,255,255,0.2);
+            }
+
+            .stat-card:hover {
+                transform: translateY(-5px);
+            }
+
+            .stat-number {
+                font-size: 2.5rem;
+                font-weight: 700;
+                color: var(--primary);
+            }
+
+            .stat-label {
+                font-size: 1rem;
+                color: #6c757d;
+                font-weight: 500;
+            }
+
+            
+            .dashboard-header {
+                background: linear-gradient(135deg, var(--primary), var(--secondary));
+                color: white;
+                padding: 2rem;
+                border-radius: 0 0 20px 20px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                text-align: center;
+                margin-bottom: 2rem;
+            }
+
+            
+            
+
+            
+            .card {
+                border: none;
+                border-radius: 15px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+                margin-bottom: 1.5rem;
+            }
+
+            .card-header {
+                font-weight: 600;
+                background-color: #fff;
+                border-bottom: 1px solid rgba(0,0,0,0.05);
+                border-radius: 15px 15px 0 0;
+            }
+
+            .card-body {
+                background: #fff;
+            }
+
+            /* ========== TASK LIST STYLES ========== */
+            .task-list-item {
+                display: flex;
+                align-items: center;
+                padding: 0.75rem 1rem;
+                border-bottom: 1px solid #f1f1f1;
+            }
+
+            .task-status {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                margin-right: 12px;
+            }
+
+            .status-completed { background-color: var(--success); }
+            .status-pending { background-color: var(--warning); }
+            .status-in-progress { background-color: var(--primary); }
+
+            .overdue-badge {
+                background-color: var(--warning);
+                color: white;
+                padding: 4px 10px;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                margin-left: auto;
+            }
+            .stat-card {
+            min-height: 150px;
+            border-radius: 8px;
+            }
+            
+            /* Smaller circular progress bar */
+            .circle-progress-sm {
+                width: 80px;
+                height: 80px;
+                border-radius: 50%;
+                background: conic-gradient(#0dcaf0 var(--progress), #e9ecef 0);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+            }
+            .circle-progress-sm::before {
+                content: '';
+                position: absolute;
+                width: 65px;
+                height: 65px;
+                border-radius: 50%;
+                background: white;
+            }
+            .circle-progress-value {
+                position: relative;
+                font-weight: bold;
+                font-size: 0.9rem;
+                z-index: 1;
+            }
+               
+
+           
+            @media (max-width: 767px) {
+                .stat-number {
+                    font-size: 1.75rem;
+                }
+            }
+    </style>
+
+    
+</head>
+<body>
+  
+    <header class="container mt-4">
+        <h2>{{ contract.title }}</h2>
+        <p>
+            <strong>Duration:</strong> {{ contract.start_date }} to {{ contract.end_date }} | <h5>{{ total_weeks }}</h5><p class="text-muted">Total Weeks</p>
+           
+        </p>
+        <hr>
+    </header>
+    
+    <!-- ================= MAIN DASHBOARD ================= -->
+<div class="container-fluid dashboard-wrapper mt-4">
+    <div class="row">
+        <!-- ===== SIDEBAR ===== -->
+        
+         <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay"></div>
+    
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3 class="mb-0">Student Panel</h3>
+            <button class="btn btn-sm btn-outline-light d-lg-none sidebar-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <ul class="sidebar-nav">
+            <li>
+                <a href="{% url 'StudentTasks:student_tasks_home' %}" class="active">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'StudentTasks:contract_list' %}">
+                    <i class="fas fa-file-contract"></i>
+                    <span>My Contracts</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'StudentTasks:contract_create' %}">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Create Contract</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'StudentTasks:weeklytask_list' contract.id %}">
+                    <i class="fas fa-tasks"></i>
+                    <span>Tasks List</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'StudentTasks:weeklytask_create' contract.id %}">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Weekly Task</span>
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Schedule</span>
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Progress Reports</span>
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <i class="fas fa-question-circle"></i>
+                    <span>Help & Support</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+    
+       
+
+        <!-- ===== MAIN CONTENT ===== -->
+       <div class="col-12">
+
+         <!-- Stats Cards -->
+            <div class="row text-center mb-4">
+    <!-- Progress Card -->
+            <div class="col-md-3 d-flex">
+                <div class="card stat-card shadow-sm flex-fill">
+                    <div class="card-body d-flex flex-column justify-content-center">
+                        <div class="circle-progress-sm mx-auto" 
+                            style="--progress: {{ submission_progress }}%;">
+                            <div class="circle-progress-value">{{ submission_progress }}%</div>
+                        </div>
+                        <p class="text-muted mt-2 mb-0">Progress</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Submitted Card -->
+            <div class="col-md-3 d-flex">
+                <div class="card stat-card shadow-sm flex-fill">
+                    <div class="card-body d-flex flex-column justify-content-center">
+                        <h5 class="mb-1">{{ submitted_weeks }}</h5>
+                        <p class="text-muted mb-0">Submitted</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Overdue Card -->
+            <div class="col-md-3 d-flex">
+                <div class="card stat-card shadow-sm flex-fill">
+                    <div class="card-body d-flex flex-column justify-content-center">
+                        <h5 class="mb-1">{{ overdue_weeks|length }}</h5>
+                        <p class="text-muted mb-0">Overdue</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Due Tasks Card -->
+            <div class="col-md-3 d-flex">
+                <div class="card stat-card shadow-sm flex-fill">
+                    <div class="card-body d-flex flex-column justify-content-center">
+                        <h5 class="mb-1">{{ due_tasks.count }}</h5>
+                        <p class="text-muted mb-0">Due Tasks</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+           
+            <!-- Last Task + Plans + Chart -->
+            <div class="row">
+                <!-- Last Added Task -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-info text-white">Last Added Task</div>
+                        <div class="card-body">
+                            {% if last_task %}
+                                <p><strong>Title:</strong> {{ last_task.title }}</p>
+                                <p><strong>Date:</strong> {{ last_task.date }}</p>
+                                <p><strong>Week:</strong> {{ last_task.week_num }}</p>
+                                <p><strong>Status:</strong>
+                                    <span class="badge 
+                                        {% if last_task.status == 'COMPLETED' %}bg-success
+                                        {% elif last_task.status == 'PENDING' %}bg-warning
+                                        {% elif last_task.status == 'rejected' %}bg-danger
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ last_task.status }}
+                                    </span>
+                                </p>
+                                <p><strong>Hours Spent:</strong> {{ last_task.hours_spent }}</p>
+                                <a href="{% url 'StudentTasks:weeklytask_list' contract.id %}" class="btn btn-outline-primary btn-sm">View All Tasks</a>
+                            {% else %}
+                                <div class="alert alert-light text-center">No tasks added yet.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+
+                <!-- Plans -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header">Working Plans</div>
+                        <div class="card-body">
+                            {% if plans %}
+                                <ul class="list-group list-group-flush">
+                                    {% for plan in plans|slice:":3" %}
+                                        <li class="list-group-item">
+                                            <h6 class="mb-0">{{ plan.title }}</h6>
+                                            <small class="text-muted">{{ plan.date }}</small>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                                <a href="#" class="btn btn-sm btn-outline-primary mt-3">View All Plans</a>
+                            {% else %}
+                                <p class="text-muted">No upcoming plans</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                  <!-- Chart -->
+                <div class="col-lg-12 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header">Weekly Submission Chart</div>
+                        <div class="card-body">
+                            <canvas id="submissionChart" height="150"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-4">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Weekly Progress Overview</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="progress mb-3" style="height: 20px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 65%" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100">65% Completed</div>
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 15%" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100">15% Pending</div>
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: 20%" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">20% Overdue</div>
+                    </div>
+                </div>             
+            </div>     
+              
+            <!-- Overdue Alert -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    {% if overdue_weeks %}
+                        <div class="alert alert-danger">
+                            <h5>Overdue Weeks — No Tasks Submitted</h5>
+                            <ul class="mb-0">
+                                {% for w in overdue_weeks %}
+                                    <li>Week {{ w.week_num }} ({{ w.start_date|date:"M d" }} - {{ w.end_date|date:"M d" }})</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success">All past weeks have submissions. Great job!</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    
+    <script>
+        // Weekly Submission Chart
+        
+        const ctx = document.getElementById('submissionChart').getContext('2d');
+        const submissionChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ week_labels|safe }},
+                datasets: [{
+                    label: 'Expected Submissions',
+                    data: {{ expected_submissions|safe }},
+                    backgroundColor: 'rgba(67, 97, 238, 0.3)',
+                    borderColor: 'rgba(67, 97, 238, 1)',
+                    borderWidth: 1
+                }, {
+                    label: 'Actual Submissions',
+                    data: {{ actual_submissions|safe }},
+                    backgroundColor: 'rgba(76, 201, 240, 0.7)',
+                    borderColor: 'rgba(76, 201, 240, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Initialize Calendar
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                events: {{ events|safe }},
+                eventContent: function(arg) {
+                    // Custom event content
+                    const isOverdue = arg.event.extendedProps.is_overdue;
+                    const status = arg.event.extendedProps.status;
+                    
+                    let statusIcon = '';
+                    if (status === 'completed') {
+                        statusIcon = '<i class="fas fa-check-circle me-1 text-success"></i>';
+                    } else if (status === 'in_progress') {
+                        statusIcon = '<i class="fas fa-spinner me-1 text-primary"></i>';
+                    }
+                    
+                    return {
+                        html: `
+                            <div class="fc-event-content d-flex align-items-center">
+                                ${statusIcon}
+                                <div class="fc-event-title">${arg.event.title}</div>
+                                ${isOverdue ? '<span class="badge bg-danger ms-2">Overdue</span>' : ''}
+                            </div>
+                        `
+                    };
+                }
+            });
+            calendar.render();
+        });
+    </script>
+</body>
+</html>
+{% endblock %}

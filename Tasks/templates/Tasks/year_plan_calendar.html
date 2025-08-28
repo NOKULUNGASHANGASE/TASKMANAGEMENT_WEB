@@ -1,0 +1,269 @@
+{% extends 'Tasks/base.html' %}
+{% load static %}
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet"> 
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"> <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css' rel='stylesheet' />
+  
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; 
+        }
+        .fc-toolbar-title {
+            font-size: 1.5rem !important; 
+            font-weight: 600 !important;
+            color: #374151; 
+        }
+        .fc-button {
+            background-color: #4f46e5 !important; 
+            border-color: #4f46e5 !important;
+            color: #ffffff !important;
+            border-radius: 0.5rem !important;
+            padding: 0.5rem 1rem !important;
+            font-size: 0.9rem !important;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .fc-button:hover {
+            background-color: #4338ca !important; 
+        }
+        .fc-daygrid-event {
+            background-color: #6366f1 !important;
+            border-color: #6366f1 !important;
+            color: #ffffff !important;
+            border-radius: 0.375rem;
+            padding: 2px 4px;
+            font-size: 0.875rem;
+            cursor: pointer; 
+        }
+        .fc-event-title {
+            white-space: normal; 
+        }
+        .fc-popover {
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+            z-index: 1001;
+        }
+        .fc-event-popover-header {
+            background-color: #4f46e5;
+            color: #ffffff;
+            padding: 0.75rem 1rem;
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+        }
+        .fc-event-popover-content {
+            padding: 1rem;
+            color: #374151;
+        }
+       
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.4); 
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            max-width: 90%;
+            width: 500px;
+            position: relative;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: #000;
+            text-decoration: none;
+        }
+       
+        @media (max-width: 768px) {
+            .fc-toolbar-title {
+                font-size: 1.25rem !important;
+            }
+            .fc-button {
+                padding: 0.4rem 0.8rem !important;
+                font-size: 0.8rem !important;
+            }
+            .modal-content {
+                width: 95%;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+<div class="container">
+    
+    <div class="container mx-auto p-4 bg-white rounded-lg shadow-xl max-w-4xl">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Working Plan Schedule</h1>
+
+        {{protocol}}/ {{domain}}
+        <div id='calendar' class="bg-white rounded-lg p-4"></div>
+        <div id="loadingIndicator" class="text-center text-gray-500 mt-4 hidden">
+           
+            
+        </div>
+      </div>
+
+    <!-- The Modal for Event Details created for the student-->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="closeModalButton">&times;</span>
+            <h2 id="modalTitle" class="text-2xl font-bold text-gray-800 mb-4"></h2>
+            <p class="text-gray-700 mb-2"><strong class="font-semibold">Start:</strong> <span id="modalStartDate"></span></p>
+            <p class="text-gray-700 mb-2"><strong class="font-semibold">End:</strong> <span id="modalEndDate"></span></p>
+            <p class="text-gray-700"><strong class="font-semibold">Description:</strong> <span id="modalDescription"></span></p>
+        </div>
+    </div>
+     <footer>
+            <p>© 2023 Company Event Calendar | Powered by FullCalendar</p>
+        </footer>
+</div>
+    <!-- FullCalendar Core JavaScript -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendar');
+            const eventModal = document.getElementById('eventModal');
+            const closeModalButton = document.getElementById('closeModalButton');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalStartDate = document.getElementById('modalStartDate');
+            const modalEndDate = document.getElementById('modalEndDate');
+            const modalDescription = document.getElementById('modalDescription');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+
+            let allEventsData = []; // Store fetched event data here to avoid it being displayed inside the calander
+
+            function showLoading() {
+                loadingIndicator.classList.remove('hidden');
+            }
+
+           
+            function hideLoading() {
+                loadingIndicator.classList.add('hidden');
+            }
+
+            //http://127.0.0.1:8000/api/year_plan_events_api/
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth', 
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,dayGridWeek,dayGridDay'
+                },
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    showLoading(); 
+                    fetch('{{protocol}}://{{domain}}/api/year_plan_events_api/')
+                        .then(response => {
+                            if (!response.ok) {
+                                // If the response is not OK (e.g., 404, 500), throw an error
+                                const errorText = `HTTP error! Status: ${response.status} - ${response.statusText}`;
+                                console.error('Error fetching year plans:', errorText);
+                                throw new Error(errorText);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            //console.log("data: ", data)
+                            // If data is successfully fetched, pass it to FullCalendar
+                            //successCallback(data);
+                            allEventsData = data;  //  then store data but do not render it on the calender.
+                            successCallback([]);  // we have an error here********then pass an empty array to prevent the events from being displayed directly to the calendar
+                        })
+                        .catch(error => {
+                            
+                            console.error('There was a problem with your fetch operation:', error);
+                            
+                            failureCallback(error);
+                       
+                        })
+                        .finally(() => {
+                            hideLoading(); 
+                        });
+                },
+                loading: function(isLoading) {
+                    
+                    if (isLoading) {
+                  
+                    } else {
+                       
+                    }
+                },
+                
+                eventClick: function(info) {
+                    // You need to find the event from the stored data based on the dates
+                    const clickedDate = info.dateStr;
+                    const event = allEventsData.find(e => 
+                        new Date(e.start).toDateString() === new Date(clickedDate).toDateString()
+                    );
+
+                    if (event) {
+                        modalTitle.textContent = event.title;
+                        modalStartDate.textContent = new Date(event.start).toLocaleDateString();
+                        
+                        const endDate = event.end ? new Date(event.end) : new Date(event.start);
+                    
+                        if (event.end && new Date(event.start).toDateString() !== endDate.toDateString()) {
+                            endDate.setDate(endDate.getDate() - 1);
+                        }
+                        modalEndDate.textContent = endDate.toLocaleDateString();
+                        modalDescription.textContent = event.description || 'No description provided.';
+                        eventModal.style.display = 'flex'; 
+                    } else {
+                        // Handle case where no event is found for the clicked date
+                        console.log("No event found for this date.");
+                    }
+                }
+            });
+
+            
+            calendar.render();
+
+            
+            closeModalButton.onclick = function() {
+                eventModal.style.display = 'none';
+            };
+
+            
+            window.onclick = function(event) {
+                if (event.target == eventModal) {
+                    eventModal.style.display = 'none';
+                }
+            };
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+{% endblock %}

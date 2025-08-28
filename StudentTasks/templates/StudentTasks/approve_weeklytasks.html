@@ -1,0 +1,45 @@
+{% extends 'Tasks/base.html' %}
+{% block content %}
+<h2>Pending Weekly Tasks for Approval</h2>
+
+{% if tasks %}
+    <table>
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Week</th>
+                <th>Date</th>
+                <th>Task Description</th>
+                <th>Hours Spent</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for task in tasks %}
+            <tr>
+                <td>{{ task.contract.student.user.get_full_name }}</td>
+                <td>Week {{ task.week_num }}</td>
+                <td>{{ task.date }}</td>
+                <td>{{ task.description }}</td>
+                <td>{{ task.hours_spent }}</td>
+                <td>{{ task.status }}</td>
+                <td>
+                    <form method="post" action="{% url 'StudentTasks:approve_weeklytask' task.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">Approve</button>
+                    </form>
+
+                    <form method="post" action="{% url 'StudentTasks:reject_weeklytask' task.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Reject</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No tasks waiting for approval.</p>
+{% endif %}
+{% endblock %}

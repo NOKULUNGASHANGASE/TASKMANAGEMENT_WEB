@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.forms import ValidationError
 from django.shortcuts import render,redirect, reverse
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
@@ -9,7 +10,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import PasswordChangeForm 
 from django.contrib.auth.decorators import login_required
 
-from StudentTasks.models import weeklytask
+from StudentTasks.models import Contract, Message, Notification, weeklytask
 from .forms import TaskForm, SignUpForm, UserUpdateForm, YearPlanForm
 from .models import Task, YearPlan
 from django.contrib import messages
@@ -22,6 +23,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from Management.models import Student, Supervisor
+
 
 def home(request):
  # messages.warning(request, "this is a test message")
@@ -43,42 +45,112 @@ def supervisor_dashboard(request):
     
     # Calculate progress for each student
     for student in students:
-        # Use student.user instead of student
-        total_tasks = weeklytask.objects.filter(contract__student=student.user).count()
-        completed_tasks = weeklytask.objects.filter(contract__student=student.user, status='Approved').count()
-        student.progress_percentage = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+     try:
+            # Use student.user instead of student
+            contract = Contract.objects.get(student=student.user)
+            total_tasks = weeklytask.objects.filter(contract__student=student.user).count()
+            completed_tasks = weeklytask.objects.filter(contract__student=student.user, status='Approved').count()
+            total_weeks = ((contract.end_date - contract.start_date).days // 7) + 1
+            student.progress_percentage = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
 
-    # Get USER IDs from students instead of student IDs
-    student_user_ids = [student.user.id for student in students]
-    
+            # Get USER IDs from students instead of student IDs
+            student_user_ids = [student.user.id for student in students]
+            
+            submitted_week_nums = set(
+                        weeklytask.objects.filter(contract=contract)
+                        .values_list('week_num', flat=True)
+                    )
+            submitted_weeks_count = len(submitted_week_nums)
+            student.progress_percentage = (submitted_weeks_count / total_weeks * 100) if total_weeks > 0 else 0
+            student.total_weeks = total_weeks
+            student.submitted_weeks = submitted_weeks_count
+            student.total_weeks = total_weeks
+            student.submitted_weeks = submitted_weeks_count
+            
+     except Contract.DoesNotExist:
+            student.progress_percentage = 0
+            student.total_weeks = 0
+            student.submitted_weeks = 0
+
     # Update all queries to use contract__student_id__in with user IDs
-    pending_tasks = weeklytask.objects.filter(
-        contract__student_id__in=student_user_ids,
-        status='Pending'
-    ).select_related('contract', 'contract__student').order_by('-date')
+    pending_tasks = weeklytask.objects.filter( contract__student_id__in=student_user_ids, status='Pending'
+    ).select_related('contract', 'contract__student').order_by('-date')[:10]
 
-    completed_tasks = weeklytask.objects.filter(
-        contract__student_id__in=student_user_ids,
-        status__in=['Approved', 'Rejected']
-    ).select_related('contract', 'contract__student').order_by('-date')
+    completed_tasks = weeklytask.objects.filter( contract__student_id__in=student_user_ids, status__in=['Approved', 'Rejected'] ).select_related('contract', 'contract__student').order_by('-date')[:10]
     
-    overdue_tasks = weeklytask.objects.filter(
-        contract__student_id__in=student_user_ids,
-        status='Pending',
-        date__lt=timezone.now().date()
-    ).select_related('contract', 'contract__student')
+    overdue_tasks = weeklytask.objects.filter( contract__student_id__in=student_user_ids, status='Pending', date__lt=timezone.now().date() ).select_related('contract', 'contract__student')
 
-    all_tasks = weeklytask.objects.filter(
-        contract__student_id__in=student_user_ids
-    ).select_related('contract', 'contract__student')
+    all_tasks = weeklytask.objects.filter( contract__student_id__in=student_user_ids ).select_related('contract', 'contract__student')
 
+    # Calculate statistics for dashboard cards
+    total_students = students.count()
+    total_pending_tasks = weeklytask.objects.filter( contract__student_id__in=student_user_ids, status='Pending').count()
+    
+    total_completed_tasks = weeklytask.objects.filter( contract__student_id__in=student_user_ids, status='Approved').count()
+    
+    total_overdue_tasks = overdue_tasks.count()
+
+    recent_activity = []
+    for task in pending_tasks:
+        recent_activity.append({'type': 'submission', 'task': task, 'date': task.date, 'student': task.contract.student.get_full_name() })
+    students_reports = 0
+    for student in students:
+        task_count = weeklytask.objects.filter(contract__student=student.user).count()
+        if task_count == 0:
+            students_reports += 1
+
+
+    for task in completed_tasks:
+        recent_activity.append({
+            'type': 'approval' if task.status == 'Approved' else 'rejection',
+            'task': task,
+            'date': task.date,
+            'student': task.contract.student.get_full_name()
+        })
+
+     # Sort by date descending and take top 10
+    recent_activity.sort(key=lambda x: x['date'], reverse=True)
+    recent_activity = recent_activity[:10]
+
+    #upcoming_deadlines = weeklytask.objects.filter(contract__student__in=students,status='Pending', date__range=(timezone.now().date(), timezone.now().date() + timedelta(days=7))).order_by('date')
+
+    # Notifications (unread)
+    notifications = Notification.objects.filter(
+        recipient=request.user,
+        is_read=False
+    ).order_by('-timestamp')
+
+    # Message Center (last 5 messages)
+    messages_inbox = Message.objects.filter(
+        recipient=request.user
+    ).order_by('-timestamp')[:5]
+
+    # Search Functionality
+    search_query = request.GET.get('q')
+    if search_query:
+        students = students.filter(
+            Q(user__first_name__icontains=search_query) |
+            Q(user__last_name__icontains=search_query) |
+            Q(user__email__icontains=search_query)
+        )
     context = {
         'students': students,
         'tasks': pending_tasks,
-        'completed_tasks': completed_tasks,
-        'overdue_tasks': overdue_tasks,
+        'notifications': notifications,
+        'messages_inbox': messages_inbox,
+        'search_query': search_query,
         'all_tasks': all_tasks,
         'pending_tasks': pending_tasks,
+        'overdue_tasks': overdue_tasks,
+        'all_tasks': all_tasks,
+        'total_students': total_students,
+        'total_pending_tasks': total_pending_tasks,
+        'total_completed_tasks': total_completed_tasks,
+        'total_overdue_tasks': total_overdue_tasks,
+        'recent_activity': recent_activity,
+        'students_reports': students_reports,
+        #'upcoming_deadlines': upcoming_deadlines,
+        
     }
 
     return render(request, 'Tasks/supervisor_dashboard.html', context)

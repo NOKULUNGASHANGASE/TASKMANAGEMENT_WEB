@@ -22,5 +22,6 @@ urlpatterns = [
     path('complete/<int:task_id>/', views.complete_task, name='complete_task'),
     path('year-plan-events/', views.year_plan_events_json, name='year_plan_events_json'),
     path('year_plan_events_api/', views.year_plan_events_api, name='year_plan_events_api'),
+     path('supervisor_students_summary/', views.supervisor_student_summary, name='supervisor_students_summary'),
 
 ]

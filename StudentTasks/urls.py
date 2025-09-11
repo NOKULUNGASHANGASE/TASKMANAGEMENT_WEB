@@ -23,6 +23,6 @@ urlpatterns = [
     # Weekly Task Approval (for supervisors)
     path('approve_weeklytask/<int:task_id>/', views.approve_weeklytask, name='approve_weeklytask'),
     path('reject_weeklytask/<int:task_id>/', views.reject_weeklytask, name='reject_weeklytask'),
-   
+    path('messages/<int:message_id>/', views.view_message, name='view_message'),
     
 ]

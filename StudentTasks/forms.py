@@ -1,11 +1,12 @@
 # forms.py
 from django import forms
-from .models import Contract, weeklytask
+from .models import Contract, weeklytask, Message
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from datetime import timedelta
 import math
+
 
 
   
@@ -58,6 +59,19 @@ class weeklytaskForm(forms.ModelForm):
                 self.add_error('date', "Cannot add tasks for future dates.")
         
         return cleaned_data
+
+
+class ReplyForm(forms.ModelForm):
+    class Meta:
+        model = Message
+        fields = ['body']
+        widgets = {
+            'body': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 5,
+                'placeholder': 'Type your reply here...'
+            }),
+        }
             
         
 

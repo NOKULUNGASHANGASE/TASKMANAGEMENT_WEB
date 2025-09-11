@@ -1,6 +1,7 @@
 from datetime import timedelta, timezone
 from django.shortcuts import render
 from rest_framework import viewsets
+from StudentTasks.models import Contract, weeklytask
 from Tasks.models import Task
 from .serializers import TaskSerializer
 from django.http import JsonResponse
@@ -164,5 +165,54 @@ def year_plan_events_api(request):
         })
 
     return JsonResponse(events, safe=False)
+
+login_required
+@require_GET
+def supervisor_student_summary(request):
+    # Get all contracts supervised by the current user
+    contracts = Contract.objects.filter(supervisor=request.user)
+    
+    # Get the associated students
+    students = Student.objects.filter(user__in=contracts.values_list('student', flat=True))
+
+    student_data = []
+
+    for student in students:
+        try:
+            contract = Contract.objects.get(student=student.user, supervisor=request.user)
+
+            total_tasks = weeklytask.objects.filter(contract=contract).count()
+            completed_tasks = weeklytask.objects.filter(contract=contract, status='Approved').count()
+
+            total_weeks = ((contract.end_date - contract.start_date).days // 7) + 1
+
+            submitted_week_nums = set(
+                weeklytask.objects.filter(contract=contract)
+                .values_list('week_num', flat=True)
+            )
+            submitted_weeks_count = len(submitted_week_nums)
+
+            progress_percentage = (submitted_weeks_count / total_weeks * 100) if total_weeks > 0 else 0
+
+            student_data.append({
+                'student_id': student.id,
+                'user_id': student.user.id,
+                'name': student.user.get_full_name(),
+                'progress_percentage': round(progress_percentage, 2),
+                'total_weeks': total_weeks,
+                'submitted_weeks': submitted_weeks_count
+            })
+
+        except Contract.DoesNotExist:
+            student_data.append({
+                'student_id': student.id,
+                'user_id': student.user.id,
+                'name': student.user.get_full_name(),
+                'progress_percentage': 0,
+                'total_weeks': 0,
+                'submitted_weeks': 0
+            })
+
+    return JsonResponse({'students': student_data}, status=200)
 
     

@@ -1,3 +1,4 @@
+from mailbox import Message
 from django.views import generic
 from django.shortcuts import render,redirect, reverse
 from django.contrib.auth.models import User
@@ -9,8 +10,8 @@ from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from StudentTasks.emailing import send_task_email
-from .models import Contract, weeklytask
-from .forms import ContractForm, weeklytaskForm
+from .models import Contract, Notification, weeklytask,Message
+from .forms import ContractForm, weeklytaskForm, ReplyForm
 from datetime import timedelta
 from django.core.mail import send_mail
 from collections import defaultdict
@@ -22,6 +23,7 @@ import datetime
 import json
 from django.conf import settings
 from StudentTasks import emailing
+
 
 
 
@@ -93,9 +95,19 @@ def student_tasks_home(request):
         'end': (task.due_date + timedelta(days=1)).isoformat(),
         'is_overdue': task.due_date.date() < today and task.datecomplited is None,
         'status': task.status,
+        
+        
         'task_id': task.id,
         'className': 'task-overdue' if task.due_date.date() < today and task.datecomplited is None else 'task-due'
     } for task in due_tasks]
+
+    completed_percent = (submitted_weeks_count / total_weeks) * 100 if total_weeks > 0 else 0
+    overdue_count = len(overdue_weeks)
+    overdue_percent = (overdue_count / total_weeks) * 100 if total_weeks > 0 else 0
+    pending_percent = 100 - completed_percent - overdue_percent
+
+
+   
 
     
         
@@ -115,7 +127,10 @@ def student_tasks_home(request):
         'week_labels': week_labels,
         'expected_submissions': expected_submissions,
         'actual_submissions': actual_submissions,
-        'plans':plans
+        'plans':plans,
+        'completed_percent': round(completed_percent),
+        'overdue_percent': round(overdue_percent),
+        'pending_percent': round(pending_percent),
         
     }
     return render(request, 'StudentTasks/home.html', context)
@@ -243,4 +258,31 @@ def reject_weeklytask(request, task_id):
 
     messages.warning(request, "Task rejected and email sent to student.")
     return redirect('Tasks:supervisor_dashboard')
+
+
+def view_message(request, message_id):
+    message = get_object_or_404(Message, id=message_id, recipient=request.user)
+    # Logic to view and potentially reply to the message
+    if not message.read:
+        message.read = True
+        message.save()
+    
+    # Handle reply form submission
+    if request.method == 'POST':
+        form = ReplyForm(request.POST)
+        if form.is_valid():
+            reply = form.save(commit=False)
+            reply.sender = request.user
+            reply.recipient = message.sender
+            reply.subject = f"Re: {message.subject}"
+            reply.parent_message = message
+            reply.save()
+            
+            messages.success(request, 'Reply sent successfully!')
+            return redirect('view_message', message_id=message.id)
+    else:
+        form = ReplyForm()
+    
+    
+    return render(request, 'Tasks/message_detail.html', {'message': message, 'form': form})
 

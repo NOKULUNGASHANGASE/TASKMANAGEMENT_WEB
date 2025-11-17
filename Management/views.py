@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.core.mail import send_mail
 from django.conf import settings
-from StudentTasks.models import weeklytask
+from StudentTasks.models import WeeklyReport
 from Tasks.models import ActivityLog, Task
 from .forms import SupervisorCreationForm
 from .models import Supervisor, Student
@@ -27,26 +27,26 @@ def create_supervisor(request):
         
 
             
-            # Create supervisor
+            
             supervisor = Supervisor.objects.create(
                 user=user,
                 status='active',
                 initial_password=form.cleaned_data['password1']
             )
             
-            # Example in create_supervisor view
+            
             ActivityLog.objects.create(
                 user=request.user,
                 action="Created supervisor",
                 description=f"Created supervisor account for {user.email}"
             )
-            # Assign students
+            
             students = form.cleaned_data['students']
             for student in students:
                 student.supervisor = supervisor
                 student.save()
             
-            # Send email with credentials
+           
             subject = 'Your Supervisor Account Credentials'
             message = f'''
             Hello {user.first_name},
@@ -74,6 +74,8 @@ def create_supervisor(request):
     
     return render(request, 'Management/create_supervisor.html', {'form': form})
 
+
+
 @user_passes_test(lambda u: u.is_superuser)
 def assign_students(request, supervisor_id):
     if request.method == 'POST':
@@ -96,6 +98,8 @@ def assign_students(request, supervisor_id):
 
     return redirect('admin_dashboard')
 
+
+
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def admin_dashboard(request):
@@ -104,11 +108,11 @@ def admin_dashboard(request):
     students = Student.objects.all().select_related('user', 'supervisor')
     active_supervisors = supervisors.filter(status='active')
     unassigned_students = Student.objects.filter(supervisor=None)
-    completed_tasks_count = weeklytask.objects.filter(status='Approved').count()
-    # Get completed tasks count (adjust based on your Task model)
+    completed_tasks_count = WeeklyReport.objects.filter(status='Approved').count()
+    
     completed_tasks_count = Task.objects.filter(status='completed').count()
     
-    # Recent activities (you might need an ActivityLog model)
+    
     recent_activities = ActivityLog.objects.all().order_by('-timestamp')[:5]
     activity_list = [
         {

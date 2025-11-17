@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>My Assigned Tasks</h2>
+<table class="table table-striped">
+    <tr>
+        <th>Title</th>
+        <th>Deadline</th>
+        <th>Status</th>
+        <th>Action</th>
+    </tr>
+    {% for t in tasks %}
+    <tr>
+        <td>{{ t.task.title }}</td>
+        <td>{{ t.task.deadline|date:"Y-m-d" }}</td>
+        <td>
+            {% if t.is_overdue %}
+                <span class="text-danger">Overdue</span>
+            {% elif t.completed %}
+                <span class="text-success">Completed</span>
+            {% else %}
+                <span class="text-warning">Pending</span>
+            {% endif %}
+        </td>
+        <td>
+            {% if not t.completed %}
+                <a href="{% url 'complete_task' t.id %}" class="btn btn-sm btn-success">Mark Complete</a>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

@@ -9,5 +9,8 @@ class tasksadmin(admin.ModelAdmin):
     
 admin.site.register(Task, tasksadmin )
 admin.site.register( YearPlan)
-
+admin.site.register(StudentTask)
+admin.site.register(ActivityLog)
+admin.site.register(Message)
+admin.site.register(Notification)
 

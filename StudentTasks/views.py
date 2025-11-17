@@ -10,14 +10,14 @@ from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from StudentTasks.emailing import send_task_email
-from .models import Contract, Notification, weeklytask,Message
-from .forms import ContractForm, weeklytaskForm, ReplyForm
+from .models import Contract, WeeklyReport
+from .forms import ContractForm, WeeklyReportForm
 from datetime import timedelta
 from django.core.mail import send_mail
 from collections import defaultdict
 from django.core.exceptions import PermissionDenied
 from Management.models import Student, Supervisor
-from Tasks.models import Task, YearPlan
+from Tasks.models import Task, YearPlan,Message, Notification
 from django.views.decorators.http import require_POST
 import datetime
 import json
@@ -31,40 +31,39 @@ from StudentTasks import emailing
 def student_tasks_home(request):
     contract = Contract.objects.filter(student=request.user).first()
     student = get_object_or_404(Student, user=request.user)
-    # student = Student.objects.get(user=request.user)
+    
     if not contract:
         return render(request, 'StudentTasks/home.html')
 
     today = timezone.now().date()
     total_weeks = ((contract.end_date - contract.start_date).days // 7) + 1
 
-    # All submitted week numbers for this contract
-    #submitted_week_nums = weeklytask.objects.filter(contract=contract).values_list('week_num', flat=True)
+   
     submitted_week_nums = set(
-        weeklytask.objects.filter(contract=contract)
+        WeeklyReport.objects.filter(contract=contract)
         .values_list('week_num', flat=True)
     )
 
-    # Calculate progress based on weeks submitted
+   
     submitted_weeks_count = len(set(submitted_week_nums))
     submission_progress = (submitted_weeks_count / total_weeks) * 100 if total_weeks > 0 else 0
 
-    # Find overdue weeks with no submission for the student
+    
     overdue_weeks = []
     for week_num in range(1, total_weeks + 1):
         week_start = contract.start_date + timedelta(days=(week_num - 1) * 7)
         week_end = week_start + timedelta(days=6)
 
-        # If week has ended and no task submitted
+        
         if week_end < today and week_num not in submitted_week_nums:
             overdue_weeks.append({
                 'week_num': week_num,
                 'start_date': week_start,
                 'end_date': week_end
             })
-    #last updated task  
-    last_task = weeklytask.objects.filter(contract=contract).order_by('-date').first()    
-    #list of tasks assigned to student not yet completed
+    
+    last_task = WeeklyReport.objects.filter(contract=contract).order_by('-date').first()    
+    
     due_tasks = Task.objects.filter(
         student=student,
         datecomplited__isnull=True,
@@ -73,12 +72,12 @@ def student_tasks_home(request):
     all_tasks = Task.objects.filter(student=student).order_by('-due_date')
 
 
-     # Completed tasks
+    
     completed_tasks = Task.objects.filter(
         student=student,
         datecomplited__isnull=False
     ).order_by('-datecomplited')
-    #year plan calender
+    
     plans = YearPlan.objects.filter(student=request.user)
     
     week_labels = []
@@ -88,7 +87,7 @@ def student_tasks_home(request):
     for week_num in range(1, total_weeks + 1):
         expected_submissions.append(1)
         actual_submissions.append(1 if week_num in submitted_week_nums else 0)
-    #calender events
+   
     events = [{
         'title': task.title,
         'start': task.due_date.isoformat(),
@@ -140,7 +139,8 @@ def student_tasks_home(request):
 
 @login_required
 def contract_list(request):
-    contract = Contract.objects.filter(student=request.user)
+    contracts = Contract.objects.all().order_by('-start_date')
+    # contract = Contract.objects.filter(student=request.user)
     return render(request, 'StudentTasks/contract_list.html', {'contract': contract})
 
 
@@ -167,122 +167,78 @@ def contract_create(request):
     return render(request, 'StudentTasks/contract.html', {'form': form })
 
 @login_required
-def contract_detail(request,  contract_id):
-    contract = get_object_or_404(Contract,  id=contract_id, student=request.user)
-    return render(request, 'StudentTasks/contract_detail.html', {'contract': contract})
-
-
-@login_required
-def weeklytask_list(request, contract_id):
-    #contract = get_object_or_404(Contract, id=contract_id, student=request.user)
-    #tasks = WeeklyTask.objects.filter(contract_id=contract_id)
-    contract = get_object_or_404(Contract, id=contract_id)
-    tasks = weeklytask.objects.filter(contract=contract).order_by('week_num')
-    context = {
-        'contract': contract,  
-        'tasks': tasks,
-    }
-    
-    return render(request, 'StudentTasks/weeklytask_list.html', context)
+def contract_detail(request, pk):
+   
+    contract = get_object_or_404(Contract, pk=pk)
+    weekly_reports = contract.weekly_reports.all()
+    return render(request, 'Contracts/contract_detail.html', {'contract': contract,'weekly_reports': weekly_reports, })
 
 @login_required
-def weeklytask_create(request, contract_id):
-    user_contracts = Contract.objects.filter(student=request.user)
-    
-    if user_contracts.count() != 1:
-        messages.warning(request, "You must have exactly one active contract to add weekly tasks.")
-        return redirect('StudentTasks:contract_list')
+def create_weekly_report(request):
+    """Allow students to submit their weekly reports."""
+    student = get_object_or_404(Student, user=request.user)
+    active_contract = Contract.objects.filter(start_date__lte=timezone.now().date(), end_date__gte=timezone.now().date()).first()
 
-    contract = get_object_or_404(Contract, id=contract_id, student=request.user)
-    if contract != user_contracts.first():
-        raise PermissionDenied("You can only add tasks to your own single contract.")
-    if request.method == "POST":
-        form = weeklytaskForm(request.POST, contract=contract)
-        if form.is_valid():
-            tasks = form.save(commit=False)
-            # Enforce task contract
-            tasks.contract = contract
-            tasks.week_num = form.cleaned_data['week_num']
-            if not tasks.hours_spent:
-                tasks.hours_spent = tasks.expected_hours()
-            tasks.save()
+    if not active_contract:
+        messages.warning(request, "You don't have an active contract to report for.")
+        return redirect('student_dashboard')
 
-            # Extra validation: task date must not be before contract start
-            if tasks.date < contract.start_date:
-                form.add_error('date', "Task date cannot be before contract start date.")
-            elif tasks.date > timezone.now().date():
-                form.add_error('date', "Cannot add tasks for future dates.")
-            else:
-                tasks.save()
-                messages.success(request, "Weekly task created successfully.")
-                return redirect('StudentTasks:weeklytask_list', contract_id=contract.id)
-    else:
-        form = weeklytaskForm()
-
-    return render(request, 'StudentTasks/weeklytask_form.html', {'form': form, 'contract': contract, 'default_hours': 40-(0*8)})  
-
-@require_POST
-@login_required
-def approve_weeklytask(request, task_id):
-    task = get_object_or_404(weeklytask, pk=task_id)
-    if request.user != task.contract.student.supervisor.user:
-        messages.error(request, "You are not authorized to approve this task.")
-        return redirect('Tasks:supervisor_dashboard')
-
-    task.status = 'Approved'
-    task.save()
-
-    # Send email notification
-    subject = "Your Weekly Task Has Been Approved"
-    message = f"Hi {task.contract.student.user.get_full_name()},\n\nYour weekly task for Week {task.week_num} has been approved by your supervisor."
-    send_task_email(task, subject, message)
-
-    messages.success(request, "Task approved and email sent to student.")
-    return redirect('Tasks:supervisor_dashboard')
-
-@require_POST
-@login_required
-def reject_weeklytask(request, task_id):
-    task = get_object_or_404(weeklytask, pk=task_id)
-    if request.user != task.contract.student.supervisor.user:
-        messages.error(request, "You are not authorized to reject this task.")
-        return redirect('Tasks:supervisor_dashboard')
-
-    task.status = 'Rejected'
-    task.save()
-
-    # Send email notification to student after the supervisor aprouve or reject
-    subject = "Your Weekly Task Has Been Rejected"
-    message = f"Hi {task.contract.student.user.get_full_name()},\n\nYour weekly task for Week {task.week_num} has been rejected by your supervisor.\nPlease review and resubmit."
-    send_task_email(task, subject, message)
-
-    messages.warning(request, "Task rejected and email sent to student.")
-    return redirect('Tasks:supervisor_dashboard')
-
-
-def view_message(request, message_id):
-    message = get_object_or_404(Message, id=message_id, recipient=request.user)
-    # Logic to view and potentially reply to the message
-    if not message.read:
-        message.read = True
-        message.save()
-    
-    # Handle reply form submission
     if request.method == 'POST':
-        form = ReplyForm(request.POST)
+        form = WeeklyReportForm(request.POST, student=student, contract=active_contract)
         if form.is_valid():
-            reply = form.save(commit=False)
-            reply.sender = request.user
-            reply.recipient = message.sender
-            reply.subject = f"Re: {message.subject}"
-            reply.parent_message = message
-            reply.save()
-            
-            messages.success(request, 'Reply sent successfully!')
-            return redirect('view_message', message_id=message.id)
+            report = form.save(commit=False)
+            report.student = student
+            report.contract = active_contract
+            report.status = 'PENDING'
+            report.save()
+            messages.success(request, f"Weekly report for Week {report.week_num} submitted successfully.")
+            return redirect('my_weekly_reports')
     else:
-        form = ReplyForm()
-    
-    
-    return render(request, 'Tasks/message_detail.html', {'message': message, 'form': form})
+        form = WeeklyReportForm(student=student, contract=active_contract)
 
+    return render(request, 'StudentTasks/weeklytask_form.html', {'form': form})
+
+
+@login_required
+def my_weekly_reports(request):
+    student = get_object_or_404(Student, user=request.user)
+    reports = WeeklyReport.objects.filter(student=student).order_by('-week_num')
+    return render(request, 'StudentTasks/weeklytask_list.html', {'reports': reports})
+
+@login_required
+def review_weekly_reports(request):
+    supervisor = get_object_or_404(Supervisor, user=request.user)
+    reports = WeeklyReport.objects.filter(student__supervisor=supervisor).select_related('student', 'contract').order_by('contract', 'week_num')
+    return render(request, 'StudentTasks/review_reports.html', {'reports': reports})
+
+@require_POST
+@login_required
+def approve_weeklyreport(request, report_id):
+    report = get_object_or_404(WeeklyReport, pk=report_id)
+    supervisor = get_object_or_404(Supervisor, user=request.user)
+
+    if report.student.supervisor != supervisor:
+        messages.error(request, "You are not authorized to approve this report.")
+        return redirect('supervisor_dashboard')
+
+    report.status = 'APPROVED'
+    report.save()
+    messages.success(request, "Report approved successfully.")
+    return redirect('supervisor_dashboard')
+
+
+@require_POST
+@login_required
+def reject_weeklyreport(request, report_id):
+    report = get_object_or_404(WeeklyReport, pk=report_id)
+    supervisor = get_object_or_404(Supervisor, user=request.user)
+
+    if report.student.supervisor != supervisor:
+        messages.error(request, "You are not authorized to reject this report.")
+        return redirect('supervisor_dashboard')
+
+    report.status = 'REJECTED'
+    report.save()
+    messages.warning(request, "Report rejected.")
+    return redirect('supervisor_dashboard')
+ 

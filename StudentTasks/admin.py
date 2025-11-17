@@ -3,4 +3,5 @@ from . models import *
     
 
 admin.site.register(Contract)
-admin.site.register(weeklytask)
+admin.site.register(WeeklyReport)
+

@@ -42,23 +42,27 @@ urlpatterns = [
     path('logoutuser/', views.logoutuser, name='logoutuser'),
     path('loginuser/', views.loginuser, name='loginuser'),
      #tasks pages
-    path('Mytasks/', views.Mytasks, name='Mytasks'),
+    #path('Mytasks/', views.Mytasks, name='Mytasks'),
     path('createtask/', views.createtask, name='createtask'),
-    path('supervisor_assign_task/', views.supervisor_assign_task, name='supervisor_assign_task'),
+    #path('supervisor_assign_task/', views.supervisor_assign_task, name='supervisor_assign_task'),
     #help user to be able to create the form without signing in
     path('accounts/login',views.loginuser, name="loginuser" ),
     path('update_user/<int:task_pk>/', views.update_user, name='update_user'),
     path('task/<int:task_pk>',views.viewtasks, name='viewtasks' ),
-    path('task/<int:task_pk>/complete',views.completetasks, name='completetasks' ),
-    path('completed',views.completedtasks, name='completedtasks' ),
-    path('task/<int:task_pk>/delete',views.deletetasks, name='deletetasks' ),
+    path('complete_task/<int:task_pk>/',views.complete_task, name='complete_task' ),
+    path('student_task_list/', views.student_task_list, name='student_task_list'),
+    path('student_overdue_tasks/', views.student_overdue_tasks, name='student_overdue_tasks'),
+    path('assign_task_to_student/<int:task_id>/', views.assign_task_to_student, name='assign_task_to_student'),
+    
+    
    # year plan calender create and view
     #path('create_year_plan/', views.create_year_plan, name='create_year_plan'),
     path('view_year_plan/', views.view_year_plan, name='view_year_plan'),
     path('create_year_plan/<int:student_id>/', views.create_year_plan, name='create_year_plan'),
     
     # urls.py
-    path('supervisor_assign_task/', views.supervisor_assign_task, name='supervisor_assign_task'),
+   
+  
     path('create_year_plan/', views.create_year_plan, name='create_year_plan'),
 
     # And this one too:
@@ -76,8 +80,12 @@ urlpatterns = [
     path('update_user/password/',auth_views.PasswordChangeView.as_view(template_name='Tasks/PasswordChange.html'),name='password_change'),
     path('update_user/password/done/', auth_views.PasswordChangeDoneView.as_view(template_name='Tasks/PasswordChangeDone.html'), name='password_change_done'),
     path('initial_password_change/', views.initial_password_change, name='initial_password_change'),
-   
+    
     path('activate/<uidb64>/<token>', emailing.activate, name="activate"),
+    path('messages_center/', views.message_center, name='message_center'),
+    path('reply_message/<int:message_id>/', views.reply_message, name='reply_message'),
+
+     
     
     #API App url path 
     path('api/', include('api.urls')),

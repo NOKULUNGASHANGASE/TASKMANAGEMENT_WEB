@@ -1,0 +1,40 @@
+{% extends 'Tasks/base.html' %}
+{% load crispy_forms_tags %} 
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h4>Assign Task: {{ task.title }}</h4>
+        </div>
+        <div class="card-body">
+            <p><strong>Description:</strong> {{ task.description }}</p>
+            {% if task.due_date %}
+                <p><strong>Deadline:</strong> {{ task.deadline|date:"Y-m-d" }}</p>
+            {% endif %}
+            <hr>
+
+            <form method="POST" class="mt-3">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="id_student" class="form-label">Select Student</label>
+                    {{ form.student|as_widget }}
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_completed" class="form-label">Completed</label>
+                    {{ form.completed|as_widget }}
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_remarks" class="form-label">Remarks (optional)</label>
+                    {{ form.remarks|as_widget }}
+                </div>
+
+                <button type="submit" class="btn btn-success">Assign Task</button>
+                <a href="{% url 'supervisor_dashboard' %}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

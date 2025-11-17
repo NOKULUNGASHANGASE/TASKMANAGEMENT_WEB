@@ -1,8 +1,9 @@
+from mailbox import Message
 from django.forms import ModelForm
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.contrib.auth.models import User
 from django import forms
-from .models import Task, YearPlan
+from .models import Task, StudentTask,YearPlan, Notification, Message
 from django_flatpickr.widgets import DatePickerInput
 from Management.models import Admin
 from Management.models import Student, Supervisor
@@ -10,16 +11,27 @@ from Management.models import Student, Supervisor
 
 
 
-class TaskForm(ModelForm):
+class StudentTaskForm(ModelForm):
     
     class Meta:
        
-       model= Task
-       fields=['title', 'description', 'due_date','important','student' ]
+       model= StudentTask
+       fields = ['student', 'task', 'completed', 'remarks']
        widgets = {
-            
-            'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control'}),
+            'student': forms.Select(attrs={'class': 'form-select'}),
+            'task': forms.Select(attrs={'class': 'form-select'}),
+            'completed': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'remarks': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+       
+       
+class TaskForm(forms.ModelForm):
+    class Meta:
+        model = Task
+        fields = ['title', 'description', 'due_date']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter task title'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Task details'}),
             'start_date': forms.DateTimeInput(attrs={
                 'class': 'ms-TextField-field form-control',
                 'type': 'date', 
@@ -32,14 +44,10 @@ class TaskForm(ModelForm):
                 'aria-describedby': 'datePickerHelp',
                 'data-is-focusable': 'true',
              }),
-            'important': forms.CheckboxInput(attrs={'class': 'form-check-input'}) 
+            
+            
         }
-    def __init__(self, *args, **kwargs):
-     supervisor = kwargs.pop('supervisor', None)
-     super(TaskForm, self).__init__(*args, **kwargs)
-
-     if supervisor and 'student' in self.fields:
-        self.fields['student'].queryset = Student.objects.filter(supervisor=supervisor)
+    
 
     
 class SignUpForm(UserCreationForm):
@@ -105,4 +113,30 @@ class YearPlanForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 3}),
             'start_date': forms.DateInput(attrs={'type': 'date'}),
             'end_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+
+
+class BulkTaskForm(forms.Form):
+    students = forms.ModelMultipleChoiceField(queryset=Student.objects.all())
+    title = forms.CharField(max_length=200)
+    description = forms.Textarea()
+    due_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+
+class MessageForm(forms.ModelForm):
+    class Meta:
+        model = Message
+        fields = ['recipient', 'subject', 'body']
+        widgets = {
+            'subject': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter message subject'}),
+            'body': forms.Textarea(attrs={'class': 'form-control', 'rows': 6, 'placeholder': 'Type your message here...'}),
+            'recipient': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+class ReplyForm(forms.ModelForm):
+    class Meta:
+        model = Message
+        fields = ['body']
+        widgets = {
+            'body': forms.Textarea(attrs={'class': 'form-control', 'rows': 8, 'placeholder': 'Type your reply here...'}),
         }

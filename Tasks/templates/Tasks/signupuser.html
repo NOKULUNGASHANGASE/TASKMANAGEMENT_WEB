@@ -3,93 +3,82 @@
 
 {% block content%}
   
-<div class="container m-5">
-  <div>
-
-    {% if messages %}
- 
- 
-        <div>
-
-          {% for message in messages %}
 
 
-            <div class="{{ message.tags }}  msgDiv">
-                <p>{{message}}</p>
-            </div>
-
-            <br/>
-            {{ message.tags }}
-          {% endfor %}
-      </div>
- 
-    {%endif %}
- </div>
   <div class="container">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header text-center">
-              <h1 class="form-tittle">Sign up</h1>
-            </div>  
-             
-            <h2 class= "error-message">{{ error}}</h2>
-            <div class="card-body"> 
-            <form method="POST" action=".">
-              <input type="hidden" name="csrfmiddlewaretoken" value="N7HFMkMVBxriaeduPlmIlD2Leg6JkdlWCwr4eyp8oIASppvhPdyHWZlDrqMO2Yr0">
-              <label for="id_username"> <br>Username<br></label>
-              <input type="text" required="username" name="username" class="form-control" maxlength="150" autofocus="" required="" aria-describedby="id_username_helptext" id="id_username">
-              <label for="id_first_name"> <br>First name<br></label>
-              <input type="text" required= "first_name" name="first_name" class="form-control" maxlength="150" id="id_first_name">
-              <label for="id_last_name"> <br>Last name<br></label>
-              <input type="text" required="last_name" name="last_name" class="form-control" maxlength="150" id="id_last_name">
-              <label for="id_email"> <br>Email address<br></label>
-              <input type="text" required= "email"  name="email" class="form-control" maxlength="254" id="id_email">
-              <label for="id_password1"> <br>Password<br></label>
-              <input type="password" required= "password1"  name="password1" autocomplete="new-password" required="" aria-describedby="id_password1_helptext" id="id_password1">
-              <label for="id_password2"> <br>Password confirmation<br></label>
-              <input type="password" required= "password2" name="password2" autocomplete="new-password" required="" aria-describedby="id_password2_helptext" id="id_password2">
-              <button type="submit" class="btn btn-Primary w-100">Sign up</button>
-    
-               {% csrf_token %}
-
-   
-               <!--{% for field in form %}
-               <label for="{{ field.id_for_label }}"> <br>{{ field.label }}<br></label>
-               {{ field }}
-     
+      
+    <div class="card">
+      <div class="card-header text-center">
+        <h1 class="form-tittle">Sign up</h1>
+      </div>  
+          
+        
+      <div class="card-body"> 
+          <h4 class= "error-message">{{ error}}</h4>
+          <form method="POST" action=".">
+            {% csrf_token %}
+            <input type="hidden" name="csrfmiddlewaretoken" value="N7HFMkMVBxriaeduPlmIlD2Leg6JkdlWCwr4eyp8oIASppvhPdyHWZlDrqMO2Yr0"/>
+            <label for="id_username">Username</label>
+            <input type="text" required="username" name="username" class="form-control" maxlength="150" autofocus="" required="" aria-describedby="id_username_helptext" id="id_username"/>
+            <label for="id_first_name">First name</label>
+            <input type="text" required= "first_name" name="first_name" class="form-control" maxlength="150" id="id_first_name"/>
+            <label for="id_last_name"> Last name</label>
+            <input type="text" required="last_name" name="last_name" class="form-control" maxlength="150" id="id_last_name"/>
+            <label for="id_email"> <br>Email address<br></label>
+            <input type="text" required= "email"  name="email" class="form-control" maxlength="254" id="id_email"/>
+            <label for="id_password1"> <br>Password<br></label>
+            <input type="password" required= "password1"  name="password1" autocomplete="new-password" required="" aria-describedby="id_password1_helptext" id="id_password1"/>
+            <label for="id_password2"> <br>Password confirmation<br></label>
+            <input type="password" required= "password2" name="password2" autocomplete="new-password" required="" aria-describedby="id_password2_helptext" id="id_password2"/>
+          
+            <input type="submit" class="btn btn-Primary w-100" value="Sign up"/>
             
-                {% endfor %}
-               <button type="submit" class="btn btn-Primary w-100">Sign up</button>-->
-           </form>
-          </div>
-        </div>
+             {% csrf_token %}
+
+            <!--{% for field in form %}
+            <label for="{{ field.id_for_label }}"> <br>{{ field.label }}<br></label>
+            {{ field }}
+
+          
+              {% endfor %}
+            <button type="submit" class="btn btn-Primary w-100">Sign up</button>-->
+        </form>
+    
       </div>
     </div>
+      
   </div>
-</div>
-
-<form method="POST" action=".">…</form>
-<!--this line of javascript: hide the coment lines from the django default form -->
- <script>
-
-  id_password1_helptext = document.getElementById("id_password1_helptext")
-  document.getElementById("id_password1").classList.add("form-control")
-
-  document.getElementById("id_password2").classList.add("form-control")
 
 
-  
-  //id_password1_helptext.hidden = true
-  id_username =document.getElementById("id_username")
-  id_email =document.getElementById("id_email")
-  id_email.addEventListener('keyup',function(value){
-    id_username.value = id_email.value
-  })
+
+  <!--this line of javascript: hide the coment lines from the django default form -->
+  <script>
+
+    id_password1_helptext = document.getElementById("id_password1_helptext")
+    document.getElementById("id_password1").classList.add("form-control")
+
+    document.getElementById("id_password2").classList.add("form-control")
 
 
-  function usernameemail(emailValue){
     
-    id_username.value = emailValue
-  }
-</script> 
+    //id_password1_helptext.hidden = true
+    id_username =document.getElementById("id_username")
+    id_email =document.getElementById("id_email")
+    id_email.addEventListener('keyup',function(value){
+      id_username.value = id_email.value
+    })
+
+
+    function usernameemail(emailValue){
+      
+      id_username.value = emailValue
+    }
+  </script> 
+
+  <style>
+
+    .card{
+      width: 100%;
+    }
+  </style>
 {% endblock%}

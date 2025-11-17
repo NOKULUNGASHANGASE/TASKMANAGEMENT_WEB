@@ -1,7 +1,7 @@
 from datetime import timedelta, timezone
 from django.shortcuts import render
 from rest_framework import viewsets
-from StudentTasks.models import Contract, weeklytask
+from StudentTasks.models import Contract, WeeklyReport
 from Tasks.models import Task
 from .serializers import TaskSerializer
 from django.http import JsonResponse
@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 import json
-from Management.models import Student
+from Management.models import Student, Supervisor
 from Tasks.models import YearPlan
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
@@ -166,53 +166,74 @@ def year_plan_events_api(request):
 
     return JsonResponse(events, safe=False)
 
-login_required
+
+@login_required
 @require_GET
 def supervisor_student_summary(request):
-    # Get all contracts supervised by the current user
-    contracts = Contract.objects.filter(supervisor=request.user)
-    
-    # Get the associated students
-    students = Student.objects.filter(user__in=contracts.values_list('student', flat=True))
+    try:
+        # Get the supervisor instance for the current user
+        supervisor = Supervisor.objects.get(user=request.user)
+        
+        # Get all contracts supervised by this supervisor
+        contracts = Contract.objects.filter(supervisor=supervisor).select_related('student')
+        
+        student_data = []
 
-    student_data = []
+        for contract in contracts:
+            student_user = contract.student
+            
+            # Get student name - handle cases where names might be empty
+            student_name = student_user.get_full_name()
+            if not student_name:
+                student_name = student_user.username
+            
+            # Get student ID - try to get Student object first, fallback to user ID
+            student_id = student_user.id  # Default to user ID
+            try:
+                student_obj = Student.objects.get(user=student_user)
+                student_id = student_obj.id
+            except Student.DoesNotExist:
+                pass  # Use user ID as fallback
 
-    for student in students:
-        try:
-            contract = Contract.objects.get(student=student.user, supervisor=request.user)
+            # Count tasks with correct status
+            total_tasks = WeeklyReport.objects.filter(contract=contract).count()
+            approved_tasks = WeeklyReport.objects.filter(contract=contract, status='APPROVED').count()
+            pending_tasks = WeeklyReport.objects.filter(contract=contract, status='PENDING').count()
+            completed_tasks = WeeklyReport.objects.filter(contract=contract, status='COMPLETED').count()
 
-            total_tasks = weeklytask.objects.filter(contract=contract).count()
-            completed_tasks = weeklytask.objects.filter(contract=contract, status='Approved').count()
+            # Calculate total weeks in contract
+            total_days = (contract.end_date - contract.start_date).days
+            total_weeks = (total_days // 7) + 1 if total_days >= 0 else 0
 
-            total_weeks = ((contract.end_date - contract.start_date).days // 7) + 1
+            # Get unique submitted weeks
+            submitted_weeks = WeeklyReport.objects.filter(contract=contract).values_list('week_num', flat=True).distinct()
+            submitted_weeks_count = len(submitted_weeks)
 
-            submitted_week_nums = set(
-                weeklytask.objects.filter(contract=contract)
-                .values_list('week_num', flat=True)
-            )
-            submitted_weeks_count = len(submitted_week_nums)
-
+            # Calculate progress percentage
             progress_percentage = (submitted_weeks_count / total_weeks * 100) if total_weeks > 0 else 0
 
             student_data.append({
-                'student_id': student.id,
-                'user_id': student.user.id,
-                'name': student.user.get_full_name(),
+                'student_id': student_id,
+                'user_id': student_user.id,
+                'name': student_name,
+                'email': student_user.email,
                 'progress_percentage': round(progress_percentage, 2),
                 'total_weeks': total_weeks,
-                'submitted_weeks': submitted_weeks_count
+                'submitted_weeks': submitted_weeks_count,
+                'total_tasks': total_tasks,
+                'approved_tasks': approved_tasks,
+                'pending_tasks': pending_tasks,
+                'completed_tasks': completed_tasks,
+                'contract_id': contract.id,
+                'contract_title': contract.title
             })
 
-        except Contract.DoesNotExist:
-            student_data.append({
-                'student_id': student.id,
-                'user_id': student.user.id,
-                'name': student.user.get_full_name(),
-                'progress_percentage': 0,
-                'total_weeks': 0,
-                'submitted_weeks': 0
-            })
+        return JsonResponse({
+            'students': student_data,
+            'total_students': len(student_data)
+        }, status=200)
 
-    return JsonResponse({'students': student_data}, status=200)
-
-    
+    except Supervisor.DoesNotExist:
+        return JsonResponse({'error': 'Supervisor profile not found. Please contact administrator.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': f'Server error: {str(e)}'}, status=500)

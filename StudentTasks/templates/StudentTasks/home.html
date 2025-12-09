@@ -35,7 +35,8 @@
             overflow-x: hidden;
         }
         
-        /* Sidebar Styles */
+        
+       
         .sidebar {
             height: 100vh;
             position: fixed;
@@ -48,6 +49,9 @@
             z-index: 1000;
             transition: all 0.3s;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            border-top-right-radius: 16px;
+            border-bottom-right-radius: 16px;
+            padding-inline: 16px;
         }
         
         .sidebar-header h3 {
@@ -65,13 +69,14 @@
             margin-bottom: 5px;
         }
         
+        
         .sidebar-nav a {
-            color: rgba(255, 255, 255, 0.8);
-            text-decoration: none;
-            display: block;
-            padding: 12px 20px;
-            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-radius: 0.75rem;
         }
+
         
         .sidebar-nav a:hover, .sidebar-nav a.active {
             color: white;
@@ -84,18 +89,18 @@
             font-size: 0.9rem;
         }
         
-        /* Main Content */
         .main-content {
             margin-left: var(--sidebar-width);
-            padding: 20px;
-            transition: all 0.3s;
+            padding: 24px;
+            max-width: 1200px;
         }
         
         /* Stats Cards */
         .stat-card {
-            border-radius: 10px;
+            border-radius: 12px;
             border: none;
             transition: transform 0.2s;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
         }
         
         .stat-card:hover {
@@ -117,8 +122,8 @@
         .circle-progress-sm::before {
             content: '';
             position: absolute;
-            width: 60px;
-            height: 60px;
+            width: 52px;
+            height: 52px;
             background-color: white;
             border-radius: 50%;
         }
@@ -152,7 +157,7 @@
             }
             
             .main-content {
-                margin-left: 0;
+                margin-top: 0;
             }
             
             .sidebar.show {
@@ -160,50 +165,56 @@
                 width: var(--sidebar-width);
             }
             
-            .sidebar-overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background-color: rgba(0, 0, 0, 0.4);
-                z-index: 999;
-            }
+    
             
             .sidebar-overlay.show {
                 display: block;
             }
-            
-            .sidebar-toggle {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                z-index: 1000;
-                width: 50px;
-                height: 50px;
-                border-radius: 50%;
-                background-color: var(--primary-color);
-                color: white;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            }
-            #doughnutLabel {
-                font-size: 1.2rem;
-                color: #333;
-            }
+        
         }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 24px 20px 32px 20px;   /* less left padding */
+        }
+        #doughnutLabel {
+            font-size: 1.2rem;
+            color: #333;
+            font-weight: 600;
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.4);
+            z-index: 999;
+            display: none;
+        }
+        .sidebar-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+                
     </style>
 </head>
 <body>
-    <!-- Sidebar Overlay for Mobile -->
+   
     <div class="sidebar-overlay"></div>
     
-    <!-- Sidebar Navigation -->
+  
     <div class="sidebar">
-        <div class="sidebar-header d-flex justify-content-between align-items-startS">
+        <div class="sidebar-header d-flex justify-content-between align-items-start">
             <h3 class="mb-0">Student Panel</h3>
             <button class="btn btn-sm btn-outline-light d-lg-none sidebar-close">
                 <i class="fas fa-times"></i>
@@ -229,13 +240,13 @@
                 </a>
             </li>
             <li>
-                <a href="{% url 'StudentTasks:weeklytask_list' contract.id %}">
+                <a href="{% url 'StudentTasks:my_weekly_reports' %}">
                     <i class="fas fa-tasks"></i>
                     <span>Tasks List</span>
                 </a>
             </li>
             <li>
-                <a href="{% url 'StudentTasks:weeklytask_create' contract.id %}">
+                <a href="{% url 'StudentTasks:create_weekly_report' %}">
                     <i class="fas fa-plus"></i>
                     <span>Add Weekly Task</span>
                 </a>
@@ -269,6 +280,7 @@
     
     <!-- Main Content -->
     <div class="main-content">
+        
         <!-- Header Section -->
         <header class="bg-white rounded-3 p-4 mb-4 shadow-sm">
             <div class="d-flex justify-content-between align-items-center flex-wrap">
@@ -355,7 +367,7 @@
             <div class="col-lg-6 mb-4">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-info text-white py-3">
-                        <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Last Added Task</h5>
+                        <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Last Updated Weekly Report</h5>
                     </div>
                     <div class="card-body">
                         {% if last_task %}

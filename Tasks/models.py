@@ -2,17 +2,18 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from Management.models import Student, Supervisor
+
 
 
 
 class Task(models.Model):
     task_id = models.IntegerField(null=True, blank=True)
     
-    supervisor = models.ForeignKey(Supervisor, on_delete=models.CASCADE, related_name='tasks')
+    supervisor = models.ForeignKey("Management.Supervisor", on_delete=models.CASCADE, related_name='tasks')
     title= models.CharField(max_length=100)
     description= models.CharField(max_length=250)
     file = models.FileField(upload_to='Newtasks/' , blank=True, null=True)
+    date_completed = models.DateTimeField(null=True, blank=True)
     created= models.DateTimeField( auto_now_add=True)
     due_date = models.DateTimeField(default=timezone.now)
     
@@ -28,11 +29,11 @@ class StudentTask(models.Model):
     ]
     
     studenttask_id=models.CharField(max_length=20, unique=True)
-    student = models.ForeignKey( Student, on_delete=models.CASCADE, related_name='student_tasks')
+    student = models.ForeignKey( "Management.Student", on_delete=models.CASCADE, related_name='student_tasks')
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='assigned_students')
     assigned_date = models.DateTimeField(auto_now_add=True)
     completed = models.BooleanField(default=False)
-    datecomplited=models.DateTimeField(null=True, blank=True)
+    date_completed=models.DateTimeField(null=True, blank=True)
     remarks = models.TextField(blank=True, null=True)
     due_date = models.DateTimeField(default=timezone.now)
     status = models.CharField(max_length=50,default="Pending")
@@ -47,11 +48,11 @@ class StudentTask(models.Model):
     def save(self, *args, **kwargs):
         if self.is_overdue():
             self.status = 'overdue'
-        super().save(*args, **kwargs)
+        super().save(*args, **kwargs) 
 
     @property
     def status(self):
-        """Return readable status for templates."""
+        
         if self.completed:
             return "Completed"
         elif self.is_overdue:
@@ -91,8 +92,7 @@ class Notification(models.Model):
         return self.message
 
 class Message(models.Model):
-    sender = models.ForeignKey(Student, on_delete=models.CASCADE, default=1)
-
+    sender = models.ForeignKey("Management.Student", on_delete=models.CASCADE, default=1)
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
     subject = models.CharField(max_length=255)

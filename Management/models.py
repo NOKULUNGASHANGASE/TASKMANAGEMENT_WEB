@@ -29,6 +29,7 @@ class Supervisor(models.Model):
 class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     supervisor = models.ForeignKey(Supervisor, on_delete=models.SET_NULL, null=True, blank=True)
+    contract = models.ForeignKey("StudentTasks.Contract", on_delete=models.SET_NULL, null=True)
     student_id = models.CharField(max_length=20, unique=True)
     department = models.CharField(max_length=100)
     status = models.CharField(max_length=20, choices=[('active', 'Active'), ('inactive', 'Inactive')],default='active')

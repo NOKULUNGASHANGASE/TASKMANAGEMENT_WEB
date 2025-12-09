@@ -29,8 +29,8 @@ class ContractForm(forms.ModelForm):
         if start_date and end_date and end_date < start_date:
             raise ValidationError("End date cannot be before start date.")
 
-        if start_date and start_date < timezone.now().date():
-            raise ValidationError("Start date cannot be in the past.")
+        #if start_date and start_date < timezone.now().date():
+           # raise ValidationError("Start date cannot be in the past.")
 
         return cleaned_data
 

@@ -17,7 +17,7 @@ from django.core.mail import send_mail
 from collections import defaultdict
 from django.core.exceptions import PermissionDenied
 from Management.models import Student, Supervisor
-from Tasks.models import Task, YearPlan,Message, Notification
+from Tasks.models import StudentTask, Task, YearPlan,Message, Notification
 from django.views.decorators.http import require_POST
 import datetime
 import json
@@ -29,87 +29,75 @@ from StudentTasks import emailing
 
 @login_required
 def student_tasks_home(request):
-    contract = Contract.objects.filter(student=request.user).first()
     student = get_object_or_404(Student, user=request.user)
-    
+    contract = Contract.objects.filter(student=student).first()
+
     if not contract:
         return render(request, 'StudentTasks/home.html')
 
     today = timezone.now().date()
     total_weeks = ((contract.end_date - contract.start_date).days // 7) + 1
 
-   
+    # FIXED: use student not contract
     submitted_week_nums = set(
-        WeeklyReport.objects.filter(contract=contract)
+        WeeklyReport.objects.filter(student=student)
         .values_list('week_num', flat=True)
     )
 
-   
-    submitted_weeks_count = len(set(submitted_week_nums))
+    submitted_weeks_count = len(submitted_week_nums)
     submission_progress = (submitted_weeks_count / total_weeks) * 100 if total_weeks > 0 else 0
 
-    
     overdue_weeks = []
     for week_num in range(1, total_weeks + 1):
         week_start = contract.start_date + timedelta(days=(week_num - 1) * 7)
         week_end = week_start + timedelta(days=6)
 
-        
         if week_end < today and week_num not in submitted_week_nums:
             overdue_weeks.append({
                 'week_num': week_num,
                 'start_date': week_start,
                 'end_date': week_end
             })
-    
-    last_task = WeeklyReport.objects.filter(contract=contract).order_by('-date').first()    
-    
-    due_tasks = Task.objects.filter(
+
+  
+    last_task = WeeklyReport.objects.filter(student=student).order_by('-date').first()
+
+  
+    due_tasks = StudentTask.objects.filter(
         student=student,
-        datecomplited__isnull=True,
-        due_date__lte=timezone.now().date()
+        date_completed__isnull=True,
+        due_date__lte=timezone.now()
     ).order_by('due_date')
-    all_tasks = Task.objects.filter(student=student).order_by('-due_date')
 
-
-    
-    completed_tasks = Task.objects.filter(
-        student=student,
-        datecomplited__isnull=False
-    ).order_by('-datecomplited')
-    
-    plans = YearPlan.objects.filter(student=request.user)
-    
-    week_labels = []
-    expected_submissions = []
-    actual_submissions = []
-    week_labels = [f"Week {i}" for i in range(1, total_weeks + 1)]
-    for week_num in range(1, total_weeks + 1):
-        expected_submissions.append(1)
-        actual_submissions.append(1 if week_num in submitted_week_nums else 0)
    
+    all_tasks = StudentTask.objects.filter(student=student).order_by('-due_date')
+
+
+    completed_tasks = StudentTask.objects.filter(
+        student=student,
+        date_completed__isnull=False
+    ).order_by('-date_completed')
+
+    plans = YearPlan.objects.filter(student=request.user)
+
+    week_labels = [f"Week {i}" for i in range(1, total_weeks + 1)]
+    expected_submissions = [1] * total_weeks
+    actual_submissions = [1 if week in submitted_week_nums else 0 for week in range(1, total_weeks + 1)]
+
     events = [{
         'title': task.title,
         'start': task.due_date.isoformat(),
         'end': (task.due_date + timedelta(days=1)).isoformat(),
-        'is_overdue': task.due_date.date() < today and task.datecomplited is None,
+        'is_overdue': task.due_date < today and task.date_completed is None,
         'status': task.status,
-        
-        
         'task_id': task.id,
-        'className': 'task-overdue' if task.due_date.date() < today and task.datecomplited is None else 'task-due'
+        'className': 'task-overdue' if task.due_date < today and task.date_completed is None else 'task-due'
     } for task in due_tasks]
 
     completed_percent = (submitted_weeks_count / total_weeks) * 100 if total_weeks > 0 else 0
     overdue_count = len(overdue_weeks)
     overdue_percent = (overdue_count / total_weeks) * 100 if total_weeks > 0 else 0
     pending_percent = 100 - completed_percent - overdue_percent
-
-
-   
-
-    
-        
 
     context = {
         'contract': contract,
@@ -126,39 +114,47 @@ def student_tasks_home(request):
         'week_labels': week_labels,
         'expected_submissions': expected_submissions,
         'actual_submissions': actual_submissions,
-        'plans':plans,
+        'plans': plans,
         'completed_percent': round(completed_percent),
         'overdue_percent': round(overdue_percent),
         'pending_percent': round(pending_percent),
-        
     }
     return render(request, 'StudentTasks/home.html', context)
 
 
 
 
+
 @login_required
 def contract_list(request):
-    contracts = Contract.objects.all().order_by('-start_date')
-    # contract = Contract.objects.filter(student=request.user)
-    return render(request, 'StudentTasks/contract_list.html', {'contract': contract})
+
+    student = get_object_or_404(Student, user=request.user)
+    
+  
+    if student.contract:
+        contracts = [student.contract]
+    else:
+        contracts = []
+    
+    return render(request, 'StudentTasks/contract_list.html', {'contract':contracts})
 
 
 @login_required
 def contract_create(request):
-    if Contract.objects.filter(student=request.user).exists():
+    student = get_object_or_404(Student, user=request.user)
+
+    if student.contract:
         messages.info(request, "you already have a contract.")
-        return redirect('student_tasks_home')
+        return redirect('StudentTasks:student_tasks_home')
     
     
     if request.method == 'POST':
         form = ContractForm(request.POST)
         if form.is_valid():
-            contract = form.save(commit=False)
-             
-            contract.student = request.user
+            contract = form.save()
+            student.contract = contract
+            student.save()
 
-            contract.save()
             contract.generate_time_periods()
             messages.success(request, "Contract created and tasks generated.")
             return redirect('StudentTasks:contract_list')
@@ -166,11 +162,61 @@ def contract_create(request):
         form = ContractForm()
     return render(request, 'StudentTasks/contract.html', {'form': form })
 
+
+@login_required
+def contract_update(request, pk):
+    student = get_object_or_404(Student, user=request.user)
+    contract = get_object_or_404(Contract, pk=pk, student=student)
+
+    if student.contract != contract:
+        messages.error(request, "You are not authorized to update this contract.")
+        return redirect('StudentTasks:contract_list')
+    
+    
+    if request.method == 'POST':
+        form = ContractForm(request.POST, instance=contract)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Contract updated successfully.")
+            return redirect('StudentTasks:contract_list')
+    else:
+        form = ContractForm(instance=contract)
+
+    return render(request, 'StudentTasks/contract.html', {'form': form})
+
+
+@login_required
+def contract_delete(request, pk):
+    student = get_object_or_404(Student, user=request.user)
+    contract = get_object_or_404(Contract, pk=pk)
+
+
+    if student.contract != contract:
+        messages.error(" You are not authorized to delete this contract please cont the admin for more information")
+        return redirect('StudentTasks:contract_list')
+    
+    if request.method == 'POST':
+        student.contract = None
+        student.save()
+        contract.delete()
+        messages.success(request, "Contract deleted successfully.")
+        return redirect('StudentTasks:contract_list')
+
+    return render(request, 'StudentTasks/contract_confirm_delete.html', {'contract': contract})
+
 @login_required
 def contract_detail(request, pk):
-   
+    #collect contract object
     contract = get_object_or_404(Contract, pk=pk)
+
+    #verify the contract belong to the logged in student
+    student = get_object_or_404(Student, user=request.user)
+    if student.contract != contract:
+        messages.error(request, "You are not authorized to view this contract.")
+        return redirect('StudentTasks:contract_list')
+
     weekly_reports = contract.weekly_reports.all()
+
     return render(request, 'Contracts/contract_detail.html', {'contract': contract,'weekly_reports': weekly_reports, })
 
 @login_required

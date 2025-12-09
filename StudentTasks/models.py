@@ -8,12 +8,10 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from Management.models import Student, Supervisor 
 
 
 class Contract(models.Model): 
     contract_id = models.CharField(max_length=20, unique=True, null=True, blank=True)
-
     title = models.CharField(max_length=100, default="UWS intern Contract")
     description = models.TextField(blank=True)
     start_date = models.DateField(default=timezone.now)

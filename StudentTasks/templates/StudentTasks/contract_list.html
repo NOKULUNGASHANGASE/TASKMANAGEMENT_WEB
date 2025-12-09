@@ -145,10 +145,10 @@
                             {% endif %}
                         </td>
                         <td>
-                        <td>
-                            <a href="{% url 'contract_detail' contract_id=contract.id %}">View Contract</a>
-                            <a href="{% url 'contract_update' contract_id=contract.id %}" class="btn btn-warning btn-sm">Edit</a>
-                            <a href="{% url 'contract_delete' contract_id=contract.id %}" class="btn btn-danger btn-sm">Delete</a>
+                        <td><a href="{% url 'StudentTasks:contract_detail' contract.id %}">View Contract</a>   
+                            <a href="{% url 'StudentTasks:contract_update' contract.id %}" class="btn btn-warning btn-sm">Edit</a>
+                            <a href="{% url 'StudentTasks:contract_delete' contract.id %}" class="btn btn-danger btn-sm">Delete</a>
+
                         </td>
                     </tr>
                     {% endfor %}

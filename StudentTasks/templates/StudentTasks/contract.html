@@ -5,8 +5,8 @@
 
 
 {% block content %}
-    <div class="container mt-4">
-        <h2>Create a Contract</h2>
+    <div class="container mt-4 formContainer">
+        <h2>CREATE CONTRACT</h2>
         
         <form method="POST">
             {% csrf_token %}
@@ -15,11 +15,50 @@
                 {{ form.as_p }}
                 
             </div>
+            <input type="submit" class="btn btn-Primary w-100" value="CREATE CONTRACT"/>
             
-            <button type="submit" class="btn btn-primary">Create Contract</button>
-            <a href="{% url 'StudentTasks:contract_list' %}" class="btn btn-secondary">Cancel</a>
+            <a href="{% url 'StudentTasks:contract_list' %}" class="btn btn-primary">Cancel</a>
             
-            
-        </form>
-    </div>
+     </div>
+    </main>
+
+    <style>
+
+    .card{
+      width: 100%;
+    }
+    #id_contract_id{
+        border-radius: 0px;
+        box-shadow: 3px;
+    }
+    #id_terms_and_conditions{
+        box-shadow: 3px;
+    }
+    form > .mb-3 > p{
+        display: flex;
+        flex-direction: column;
+    }
+    form > .mb-3 > p > label{
+       
+        display: flex;
+        justify-content: start;
+        
+    }
+    form > .mb-3 > p > input{
+        display: flex;
+        justify-content: start;
+        border-radius: 0px;
+    }
+    form > .mb-3 > p > textarea{
+        box-shadow: 5px;
+    }
+    .formContainer{
+        border : solid 1px grey ;
+        border-radius: 12px;
+        box-shadow: 2px 2px 2px ;
+    }
+    
+
+    
+   </style>
 {% endblock %}

@@ -2,8 +2,7 @@
 {% load static %}
 {% block content %}
 
-<!DOCTYPE html>
-<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,203 +15,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- FullCalendar -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
-     <style>
-        :root {
-            --sidebar-width: 250px;
-            --primary-color: #4e73df;
-            --secondary-color: #6f42c1;
-            --success-color: #1cc88a;
-            --info-color: #36b9cc;
-            --warning-color: #f6c23e;
-            --danger-color: #e74a3b;
-            --top-navbar-height: 60px;
-        }
-        
-        body {
-            background-color: #f8f9fc;
-            padding-top: var(--top-navbar-height);
-            transition: background-color var(--transition-speed), color var(--transition-speed);
-            overflow-x: hidden;
-        }
-        
-        
-       
-        .sidebar {
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: var(--sidebar-width);
-            padding-top: 20px;
-            background: linear-gradient(180deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            color: white;
-            z-index: 1000;
-            transition: all 0.3s;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            border-top-right-radius: 16px;
-            border-bottom-right-radius: 16px;
-            padding-inline: 16px;
-        }
-        
-        .sidebar-header h3 {
-            font-size: 1.2rem;
-            padding: 0 20px;
-        }
-        
-        .sidebar-nav {
-            list-style: none;
-            padding: 0;
-            margin-top: 20px;
-        }
-        
-        .sidebar-nav li {
-            margin-bottom: 5px;
-        }
-        
-        
-        .sidebar-nav a {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            border-radius: 0.75rem;
-        }
-
-        
-        .sidebar-nav a:hover, .sidebar-nav a.active {
-            color: white;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-left: 4px solid white;
-        }
-        
-        .sidebar-nav i {
-            width: 25px;
-            font-size: 0.9rem;
-        }
-        
-        .main-content {
-            margin-left: var(--sidebar-width);
-            padding: 24px;
-            max-width: 1200px;
-        }
-        
-        /* Stats Cards */
-        .stat-card {
-            border-radius: 12px;
-            border: none;
-            transition: transform 0.2s;
-            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        /* Circle Progress */
-        .circle-progress-sm {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background: conic-gradient(var(--success-color) 0% calc(var(--progress) * 1%), #eaecf4 calc(var(--progress) * 1%) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-        
-        .circle-progress-sm::before {
-            content: '';
-            position: absolute;
-            width: 52px;
-            height: 52px;
-            background-color: white;
-            border-radius: 50%;
-        }
-        
-        .circle-progress-value {
-            position: relative;
-            font-weight: bold;
-            color: var(--success-color);
-        }
-        
-        /* Progress Bars */
-        .progress {
-            height: 20px;
-            border-radius: 10px;
-        }
-        
-        /* Overdue Alert */
-        .alert-danger {
-            border-left: 5px solid var(--danger-color);
-        }
-        
-        .alert-success {
-            border-left: 5px solid var(--success-color);
-        }
-        
-        /* Responsive Adjustments */
-        @media (max-width: 992px) {
-            .sidebar {
-                transform: translateX(-100%);
-                width: 0;
-            }
-            
-            .main-content {
-                margin-top: 0;
-            }
-            
-            .sidebar.show {
-                transform: translateX(0);
-                width: var(--sidebar-width);
-            }
-            
-    
-            
-            .sidebar-overlay.show {
-                display: block;
-            }
-        
-        }
-
-        .main-content {
-            margin-left: var(--sidebar-width);
-            padding: 24px 20px 32px 20px;   /* less left padding */
-        }
-        #doughnutLabel {
-            font-size: 1.2rem;
-            color: #333;
-            font-weight: 600;
-        }
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background-color: rgba(0, 0, 0, 0.4);
-            z-index: 999;
-            display: none;
-        }
-        .sidebar-toggle {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background-color: var(--primary-color);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        }
-                
+     <style>    
     </style>
 </head>
-<body>
+
    
     <div class="sidebar-overlay"></div>
-    
-  
     <div class="sidebar">
         <div class="sidebar-header d-flex justify-content-between align-items-start">
             <h3 class="mb-0">Student Panel</h3>
@@ -278,8 +86,7 @@
         </ul>
     </div>
     
-    <!-- Main Content -->
-    <div class="main-content">
+  
         
         <!-- Header Section -->
         <header class="bg-white rounded-3 p-4 mb-4 shadow-sm">
@@ -415,7 +222,19 @@
                 
             
             <!-- Weekly Progress Overview -->
-           
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                        <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Weekly Progress Overview</h5>
+                </div>
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                    <div style="width: 250px; height: 250px; position: relative;">
+                        <canvas id="progressDoughnutChart"></canvas>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
             
             <!-- Quick Stats -->
             <div class="col-lg-4 mb-4">

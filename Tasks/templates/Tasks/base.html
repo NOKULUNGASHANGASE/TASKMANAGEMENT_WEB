@@ -43,6 +43,7 @@
                 margin-left: var(--sidebar-width);
                 padding: 20px;
                 width: calc(100% - var(--sidebar-width));
+                transition: all 0.3s ease;
             }
             
             .main-content > .row:first-child,
@@ -52,11 +53,12 @@
             
             .sidebar {
                 height: 100vh;
+                border-right: 1px solid rgba(255, 0, 0, 0.2);
                 position: fixed;
                 top: 0;
                 left: 0;
                 width: var(--sidebar-width);
-                padding-top: 20px;
+                padding: 20px 0 20px 0;
                 background: linear-gradient(180deg, var(--primary-color) 0%, var(--secondary-color) 100%);
                 color: white;
                 z-index: 1000;
@@ -64,21 +66,27 @@
                 box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
                 border-top-right-radius: 16px;
                 border-bottom-right-radius: 16px;
-                padding-inline: 16px;
+                box-sizing: border-box;
+                
+            }
+            .sidebar-header {
+                padding: 0 16px 20px 16px;
+
             }
             .sidebar-header h3 {
             font-size: 1.2rem;
-            padding: 0 20px;
+            
             }
             
             .sidebar-nav {
                 list-style: none;
                 padding: 0;
-                margin-top: 20px;
+                margin: 0;
             }
             
             .sidebar-nav li {
                 margin-bottom: 5px;
+                padding: 0 8px;
             }
             
             
@@ -87,19 +95,89 @@
                 align-items: center;
                 gap: 0.75rem;
                 border-radius: 0.75rem;
+                padding: 10px 16px;
+                text-decoration: none;
+                color: rgb( 225, 255, 255, 0.9);
+                transition: all 0.2s ease;
             }
 
             
             .sidebar-nav a:hover, .sidebar-nav a.active {
                 color: white;
-                background-color: rgba(255, 255, 255, 0.1);
+                background-color: rgba(255, 255, 255, 0.15);
                 border-left: 4px solid white;
             }
             
             .sidebar-nav i {
-                width: 25px;
+                width: 20px;
                 font-size: 0.9rem;
+                text-align: center;
             }
+            .sidebar-toggle {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 1001;
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                background-color: var(--primary-color);
+                color: white;
+                border: none;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+                cursor: pointer;
+            }
+
+            .sidebar-close {
+                background: transparent;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                color: white;
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 6px;
+                cursor: pointer;
+            }
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+                cursor: pointer;
+            }
+
+             @media (max-width: 992px) {
+                .sidebar {
+                    transform: translateX(-100%);
+                    width: 280px;
+                    border-top-right-radius: 0;
+                    border-bottom-right-radius: 0;
+                }
+                
+                .sidebar.show {
+                    transform: translateX(0);
+                }
+                
+                .main-content {
+                    margin-left: 0 !important;
+                    width: 100%;
+                    padding: 15px;
+                }
+                
+                .sidebar-overlay.show {
+                    display: block;
+                }
+            }
+            
 
             .stat-card {
                 border-radius: 12px;
@@ -152,28 +230,6 @@
                 border-left: 5px solid var(--success-color);
             }
             
-            @media (max-width: 992px) {
-                .sidebar {
-                    transform: translateX(-100%);
-                    width: 0;
-                }
-                
-                .main-content {
-                    margin-left: 0 !important;
-                    margin: 100%;
-                    padding: 15px;
-                }
-                
-                .sidebar.show {
-                    transform: translateX(0);
-                    width: var(--sidebar-width);
-                }
-                
-                .sidebar-overlay.show {
-                    display: block;
-                }
-            
-            }
 
             
             #doughnutLabel {
@@ -205,9 +261,7 @@
                 box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             }
 
-            .main-content{
-            border-left: 3px solid red;    
-            }
+           
             .nunito-uniquifier> {
                 font-family: "Nunito", sans-serif;
                 font-optical-sizing: auto;
@@ -397,14 +451,14 @@
                 color: #ffffff;
             }
 
-            /* Main container */
+           
             .container {
                 max-width: 1000px;
                 margin: auto;
                 padding: 20px;
             }
 
-            /* Jumbotron */
+        
             .jumbotron {
                 background-color: #e9ecef;
                 padding: 30px;

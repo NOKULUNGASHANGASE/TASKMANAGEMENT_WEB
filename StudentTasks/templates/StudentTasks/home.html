@@ -7,18 +7,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard</title>
-    <!-- Bootstrap CSS -->
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- FullCalendar -->
+    
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
      <style>    
     </style>
 </head>
-
+<body>
    
     <div class="sidebar-overlay"></div>
     <div class="sidebar">
@@ -30,7 +30,7 @@
         </div>
         <ul class="sidebar-nav">
             <li>
-                <a href="{% url 'StudentTasks:student_tasks_home' %}" class="active">
+                <a href="{% url 'StudentTasks:student_tasks_home' %}" >
                     <i class="fas fa-tachometer-alt"></i>
                     <span>Dashboard</span>
                 </a>
@@ -50,13 +50,13 @@
             <li>
                 <a href="{% url 'StudentTasks:my_weekly_reports' %}">
                     <i class="fas fa-tasks"></i>
-                    <span>Tasks List</span>
+                    <span>Report List</span>
                 </a>
             </li>
             <li>
                 <a href="{% url 'StudentTasks:create_weekly_report' %}">
                     <i class="fas fa-plus"></i>
-                    <span>Add Weekly Task</span>
+                    <span>Add Weekly Report</span>
                 </a>
             </li>
             <li>
@@ -86,28 +86,87 @@
         </ul>
     </div>
     
-  
+  <div >   
+    
         
-        <!-- Header Section -->
+        
+       
         <header class="bg-white rounded-3 p-4 mb-4 shadow-sm">
-            <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <div class="welcome-section">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <h2 class="mb-1">{{ contract.title }}</h2>
-                    <p class="mb-0 text-muted">
-                        <strong>Duration:</strong> {{ contract.start_date }} to {{ contract.end_date }}
+                    <h6 style="font-size: 28px; font-weight: 600; margin-bottom: 8px;">Welcome back, {{ student.user.first_name }} {{ student.user.last_name }}</h1>
+                    <p style="margin: 0; opacity: 0.9; font-size: 15px;">
+                        Student Dashboard | {{ "now"|date:"l, F j, Y" }}
                     </p>
                 </div>
-                <div class="text-center mt-2 mt-md-0">
-                    <h5 class="mb-0 text-primary">{{ total_weeks }}</h5>
-                    <p class="text-muted mb-0">Total Weeks</p>
+                <div style="text-align: right;">
+                    <div style="font-size: 13px; opacity: 0.8; margin-bottom: 5px;">Student ID</div>
+                    <div style="font-size: 18px; font-weight: 600;">{{ student.student_id }}</div>
                 </div>
             </div>
-            <hr class="my-3">
+        </div>
+                
         </header>
+       
+    {% if not has_supervisor %}
+    <div class="alert-banner">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <div>
+            <div style="font-weight: 600; margin-bottom: 3px;">Supervisor Assignment Required</div>
+            <div style="font-size: 14px; opacity: 0.9;">Please contact the administration office to have a supervisor assigned to your account.</div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if pending_reports_count > 0 %}
+    <div class="alert-banner info">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <div>
+            <div style="font-weight: 600; margin-bottom: 3px;">{{ pending_reports_count }} Report{{ pending_reports_count|pluralize }} Pending Review</div>
+            <div style="font-size: 14px; opacity: 0.9;">Your weekly report{{ pending_reports_count|pluralize }} {{ pending_reports_count|pluralize:"is,are" }} currently awaiting supervisor approval.</div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if needs_weekly_report %}
+    <div class="alert-banner warning">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <div style="flex: 1;">
+            <div style="font-weight: 600; margin-bottom: 3px;">Weekly Report Submission Required</div>
+            <div style="font-size: 14px; opacity: 0.9;">Your weekly report for this period is due. Please submit it at your earliest convenience.</div>
+        </div>
+        <a href="{% url 'StudentTasks:create_weekly_report' %}" class="btn btn-primary">Submit Report</a>
+    </div>
+    {% endif %}
+
+    {% if total_overdue_tasks > 0 %}
+    <div class="alert-banner">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <div>
+            <div style="font-weight: 600; margin-bottom: 3px;">{{ total_overdue_tasks }} Overdue Task{{ total_overdue_tasks|pluralize }}</div>
+            <div style="font-size: 14px; opacity: 0.9;">You have task{{ total_overdue_tasks|pluralize }} that have passed their due date. Please review and complete {{ total_overdue_tasks|pluralize:"it,them" }} promptly.</div>
+        </div>
+    </div>
+    {% endif %}
         
-        <!-- Stats Cards -->
         <div class="row mb-4">
-            <!-- Progress Card -->
+            
             <div class="col-md-6 col-lg-3 mb-3">
                 <div class="stat-card bg-white p-3 rounded-3 shadow-sm h-100">
                     <div class="d-flex align-items-center">
@@ -116,13 +175,13 @@
                         </div>
                         <div>
                             <h6 class="mb-0">Progress</h6>
-                            <p class="text-muted small mb-0">Tasks Completion</p>
+                            <p class="text-muted small mb-0">Contract Report</p>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Submitted Card -->
+            
             <div class="col-md-6 col-lg-3 mb-3">
                 <div class="stat-card bg-white p-3 rounded-3 shadow-sm h-100">
                     <div class="d-flex align-items-center">
@@ -131,13 +190,14 @@
                         </div>
                         <div>
                             <h4 class="mb-0">{{ submitted_weeks }}</h4>
-                            <p class="text-muted small mb-0">Submitted</p>
+                            <div class="subtitle">{{ total_weeks }} total weeks</div>
+                            <p class="text-muted small mb-0">Submitted Reports</p>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Overdue Card -->
+           
             <div class="col-md-6 col-lg-3 mb-3">
                 <div class="stat-card bg-white p-3 rounded-3 shadow-sm h-100">
                     <div class="d-flex align-items-center">
@@ -146,231 +206,584 @@
                         </div>
                         <div>
                             <h4 class="mb-0">{{ overdue_weeks|length }}</h4>
-                            <p class="text-muted small mb-0">Overdue</p>
+                            <p class="text-muted small mb-0">Overdue Reports</p>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Due Tasks Card -->
             <div class="col-md-6 col-lg-3 mb-3">
                 <div class="stat-card bg-white p-3 rounded-3 shadow-sm h-100">
                     <div class="d-flex align-items-center">
-                        <div class="bg-warning bg-opacity-10 p-3 rounded-circle me-3">
-                            <i class="fas fa-clock text-warning"></i>
+                        <div class="bg-danger bg-opacity-10 p-3 rounded-circle me-3">
+                            <i class="fas fa-exclamation-triangle text-danger"></i>
                         </div>
                         <div>
-                            <h4 class="mb-0">{{ due_tasks.count }}</h4>
-                            <p class="text-muted small mb-0">Due Tasks</p>
+                            <div class="value">{{ total_completed_tasks }}: completed Tasks</div>
+                            
+                            <div class="subtitle">{{ total_pending_tasks }}: pending  {{ total_tasks }}: total assigned</div>
+                            <div class="progress-bar-custom">
+                                <div class="progress-fill" style="width: {% if total_tasks > 0 %}{% widthratio total_completed_tasks total_tasks 100 %}{% else %}0{% endif %}%;"></div>
+                                
+                        </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+            
+            
         
-        <!-- Main Dashboard Content -->
-        <div class="row">
-            <!-- Last Added Task -->
-            <div class="col-lg-6 mb-4">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-header bg-info text-white py-3">
-                        <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Last Updated Weekly Report</h5>
-                    </div>
-                    <div class="card-body">
-                        {% if last_task %}
-                            <div class="mb-3">
-                                <p class="mb-1"><strong>Title:</strong> {{ last_task.title }}</p>
-                                <p class="mb-1"><strong>Date:</strong> {{ last_task.date }}</p>
-                                <p class="mb-1"><strong>Week:</strong> {{ last_task.week_num }}</p>
-                                <p class="mb-1"><strong>Status:</strong>
-                                    <span class="badge 
-                                        {% if last_task.status == 'COMPLETED' %}bg-success
-                                        {% elif last_task.status == 'PENDING' %}bg-warning
-                                        {% elif last_task.status == 'rejected' %}bg-danger
-                                        {% else %}bg-secondary{% endif %}">
-                                        {{ last_task.status }}
-                                    </span>
-                                </p>
-                                <p class="mb-0"><strong>Hours Spent:</strong> {{ last_task.hours_spent }}</p>
-                            </div>
-                            <a href="{% url 'StudentTasks:weeklytask_list' contract.id %}" class="btn btn-outline-primary btn-sm mt-2">View All Tasks</a>
-                        {% else %}
-                            <div class="text-center py-4">
-                                <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
-                                <p class="text-muted mb-0">No tasks added yet.</p>
-                            </div>
+        
+        <div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-start">
+                <h5 class="card-title mb-0"> Reports Awaiting for Review</h5>
+                <a href="{% url 'StudentTasks:my_weekly_reports' %}" class="btn btn-outline btn-sm">View All</a>
+            </div>
+            <div class="card-body d-flex flex-column p-3">
+                {% if recent_reports %}
+                    {% for report in recent_reports %}
+                    <div class="report-item mb-2">
+                        <div class="item-title small fw-bold">{{ report.week_num }}: {{ report.title|truncatechars:40 }}</div>
+                        <div class="item-meta small text-muted d-flex flex-wrap gap-1">
+                            <span>📅 {{ report.date|date:"M d" }}</span>
+                            <span>⏰ {{ report.hours_spent }}h</span>
+                            <span class="badge badge-{{ report.status|lower }} px-2 py-1">
+                                {{ report.get_status_display }}
+                                {% if report.status == 'PENDING' %}*{% endif %}
+                            </span>
+                        </div>
+                        {% if report.supervisor_comment and report.status == 'REJECTED' %}
+                        <div class="mt-1 p-2 bg-danger-subtle border-start border-danger border-3 small">
+                            <strong>Feedback:</strong> {{ report.supervisor_comment|truncatechars:60 }}
+                        </div>
                         {% endif %}
                     </div>
-                </div>
-            </div>
-            
-            <!-- Working Plans -->
-            <div class="col-lg-8 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Weekly Progress Overview</h5>
-                </div>
-                <div class="card-body d-flex flex-column align-items-center justify-content-center">
-                    <div style="width: 250px; height: 250px; position: relative;">
-                        <canvas id="progressDoughnutChart"></canvas>
-                        <!-- Optional center label -->
-                        
+                    {% endfor %}
+                    
+                    {% if pending_reports_count > 0 %}
+                    <div class="alert alert-warning mt-auto small mb-0" role="alert">
+                        ⏳ {{ pending_reports_count }} report{{ pending_reports_count|pluralize }} pending review
                     </div>
-                </div>
-            </div>
-        </div>
-                
-            
-            <!-- Weekly Progress Overview -->
-        <div class="col-lg-6 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white py-3">
-                        <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Weekly Progress Overview</h5>
-                </div>
-                <div class="card-body d-flex flex-column align-items-center justify-content-center">
-                    <div style="width: 250px; height: 250px; position: relative;">
-                        <canvas id="progressDoughnutChart"></canvas>
-                    </div>
-                </div>
-                </div>
-            </div>
-        </div>
-            
-            <!-- Quick Stats -->
-            <div class="col-lg-4 mb-4">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-header bg-white py-3">
-                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Quick Stats</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                            <span class="text-muted">Total Tasks</span>
-                            <h5 class="mb-1">{{ due_tasks.count }}</h5>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                            <span class="text-muted">Completed</span>
-                            <span class="fw-bold text-success"></span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                            <span class="text-muted">Pending Review</span>
-                            <span class="fw-bold text-warning"></span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                            <span class="text-muted">Avg. Hours/Week</span>
-                            <span class="fw-bold"></span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="text-muted">Productivity Score</span>
-                            <span class="fw-bold text-info"></span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Overdue Alert -->
-        <div class="row mt-2">
-            <div class="col-12">
-                {% if overdue_weeks %}
-                    <div class="alert alert-danger rounded-3">
-                        <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Overdue Weeks — No Tasks Submitted</h5>
-                        <ul class="mb-0 mt-2">
-                            {% for w in overdue_weeks %}
-                                <li>Week {{ w.week_num }} ({{ w.start_date|date:"M d" }} - {{ w.end_date|date:"M d" }})</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
+                    {% endif %}
                 {% else %}
-                    <div class="alert alert-success rounded-3">
-                        <i class="fas fa-check-circle me-2"></i>All past weeks have submissions. Great job!
+                    <div class="d-flex flex-column justify-content-center align-items-center h-100 text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-muted mb-2" style="width: 32px; height: 32px;">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        <p class="small mb-2 text-muted">No reports submitted yet.</p>
+                        <a href="{% url 'StudentTasks:create_weekly_report' %}" class="btn btn-primary btn-sm">Submit Report</a>
                     </div>
                 {% endif %}
             </div>
         </div>
     </div>
     
-    <!-- Mobile Toggle Button -->
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-start">
+                <h5 class="card-title mb-0"> Tasks Assigned ({{ total_pending_tasks }})</h5>
+                <a href="{% url 'student_task_list' %}" class="btn btn-outline btn-sm">View All</a>
+            </div>
+            <div class="card-body d-flex flex-column p-3">
+                {% if pending_tasks %}
+                    {% for task in pending_tasks %}
+                    <div class="task-item mb-2 {% if task.due_date < timezone.now %}border-danger border-start border-2{% endif %} p-2 bg-light rounded">
+                        <div class="item-title small fw-bold mb-1">{{ task.task.title|truncatechars:40 }}</div>
+                        <div class="item-meta small text-muted">
+                            <span>📅 {{ task.due_date|date:"M d H:i" }}</span>
+                            {% if task.due_date < timezone.now %}
+                            <span class="badge badge-danger ms-1">Overdue</span>
+                            {% else %}
+                            <span class="badge badge-warning ms-1">Pending</span>
+                            {% endif %}
+                        </div>
+                        {% if task.task.description %}
+                        <div class="small text-muted mt-1">{{ task.task.description|truncatechars:50 }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="d-flex flex-column justify-content-center align-items-center h-100 text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-success mb-2" style="width: 32px; height: 32px;">
+                            <polyline points="9 11 12 14 22 4"></polyline>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                        <p class="small mb-0 text-success fw-bold">No pending tasks!</p>
+                        <p class="small text-muted mt-1">You're all caught up.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0"><i class="fas fa-chart-line me-2 text-primary"></i>Weekly Progress</h6>
+            </div>
+            <div class="card-body d-flex flex-column p-3">
+                <div class="chart-container flex-grow-1 mb-3">
+                    <canvas id="progressChart" height="200"></canvas>
+                </div>
+                <div class="row g-2 text-center">
+                    <div class="col-4">
+                        <div class="fw-bold fs-5 text-success">{{ completed_percent|floatformat:0 }}%</div>
+                        <small class="text-muted">Completed</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold fs-5 text-warning">{{ pending_percent|floatformat:0 }}%</div>
+                        <small class="text-muted">Pending</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold fs-5 text-danger">{{ overdue_percent|floatformat:0 }}%</div>
+                        <small class="text-muted">Overdue</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+                
+            
+       <div class="row">
+
+    
+    <div class="col-lg-6 mb-4 d-flex">
+        <div class="card border-0 shadow-sm w-100 h-100">
+            <div class="card-header">
+                <h2 class="card-title mb-0">Current Week Schedule</h2>
+            </div>
+
+            <div class="card-body d-flex flex-column">
+
+                <div class="week-calendar">
+                    {% for day in "MTWRF" %}
+                    <div class="calendar-day">
+                        <div class="calendar-day-header">
+                            {% if day == 'M' %}Mon
+                            {% elif day == 'T' %}Tue
+                            {% elif day == 'W' %}Wed
+                            {% elif day == 'R' %}Thu
+                            {% elif day == 'F' %}Fri
+                            {% endif %}
+                        </div>
+                        <div class="calendar-day-body">
+                            <div class="hours">8 hrs</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="mt-auto p-3 bg-light rounded">
+                    <div class="text-muted small">Next report due:</div>
+                    <div class="fw-semibold">End of current week</div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+   
+    <div class="col-lg-6 mb-4 d-flex">
+        <div class="card border-0 shadow-sm w-100 h-100">
+            <div class="card-header">
+                <h2 class="card-title mb-0">Performance Metrics</h2>
+            </div>
+
+                <div class="card-body">
+
+                    <div class="insight-item">
+                        <div class="insight-icon bg-success-subtle">
+                            ✔
+                        </div>
+                            <div>
+                                <div class="insight-title">Report Submission Rate</div>
+                                <div class="insight-value">{{ submission_progress|floatformat:0 }}%</div>
+                                <div class="insight-description">
+                                    {% if submission_progress >= 90 %}
+                                        Excellent! You're staying on top of your reports.
+                                    {% elif submission_progress >= 70 %}
+                                        Good progress, keep it up!
+                                    {% else %}
+                                        You may need to catch up on some reports.
+                                    {% endif %}
+                                </div>
+                            </div>
+                            </div>
+
+                        <div class="insight-item">
+                            <div class="insight-icon bg-primary-subtle">
+                                ⏱
+                            </div>
+                            <div>
+                                <div class="insight-title">Average Response Time</div>
+                                <div class="insight-value">
+                                    {% if pending_reports_count > 0 %}Pending{% else %}Up to date{% endif %}
+                                </div>
+                                <div class="insight-description">
+                                    Time for supervisor to review your reports
+                                </div>
+                            </div>
+                        </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+        
+    
+       
+           
+
+    
+    <div class="row mt-2">
+    {% if overdue_weeks %}
+    <div class="card" style="background: #fff5f5; border-left: 4px solid #f56565;">
+        <div class="card-header" style="border-bottom: none;">
+            <h2 class="card-title" style="color: #c53030;">Outstanding Weekly Reports</h2>
+        </div>
+        <p style="color: #742a2a; margin-bottom: 15px;">The following reporting periods require submission ({{ overdue_weeks|length }} week{{ overdue_weeks|length|pluralize }}):</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+            {% for week in overdue_weeks %}
+            <div style="background: white; padding: 12px; border-radius: 6px; border: 1px solid #feb2b2;">
+                <div style="font-weight: 600; color: #c53030;">Week {{ week.week_num }}</div>
+                <div style="font-size: 13px; color: #742a2a; margin-top: 3px;">
+                    {{ week.start_date|date:"M d" }} - {{ week.end_date|date:"M d" }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <a href="{% url 'StudentTasks:create_weekly_report' %}" class="btn btn-primary" style="margin-top: 15px; background: #c53030;">Submit Reports</a>
+    </div>
+    {% endif %}
+
+    
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Quick Actions</h2>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <a href="{% url 'StudentTasks:create_weekly_report' %}" class="quick-action-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                </svg>
+                <span>Submit Weekly Report</span>
+            </a>
+            
+            <a href="{% url 'StudentTasks:my_weekly_reports' %}" class="quick-action-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <span>View All Reports</span>
+            </a>
+            
+            <a href="{% url 'StudentTasks:contract_detail' contract.id %}" class="quick-action-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                <span>Contract Details</span>
+            </a>
+            
+            <a href="#" class="quick-action-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>Message Supervisor</span>
+            </a>
+        </div>
+    </div>
+    </div>
+   
+  
+            <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"> Recent Activity</h2>
+                    </div>
+                    
+                    {% if recent_activity %}
+                        {% for activity in recent_activity %}
+                        <div class="activity-item">
+                            <div class="item-title">
+                                {% if activity.type == 'report_submission' %}
+                                    📝 Submitted Weekly Report
+                                {% elif activity.type == 'task_completion' %}
+                                    ✅ Completed Task
+                                {% endif %}
+                            </div>
+                            <div class="item-meta">
+                                <span>{{ activity.description }}</span>
+                                <span>{{ activity.date|date:"M d, Y" }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <p>No recent activity.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+       
+
+    
+    
+    
+    </body>
+    
+    
     <button class="sidebar-toggle d-lg-none">
         <i class="fas fa-bars"></i>
     </button>
+    </body>
     
+
+<style>
+    .quick-action-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: 20px;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        text-decoration: none;
+        color: #2d3748;
+        transition: all 0.3s ease;
+    }
+
+    .quick-action-btn:hover {
+        border-color: #667eea;
+        background: #f7fafc;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+    }
+
+    .quick-action-btn svg {
+        color: #667eea;
+    }
+
+    .quick-action-btn span {
+        font-weight: 600;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .insight-item {
+        display: flex;
+        gap: 15px;
+        padding: 15px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .insight-item:last-child {
+        border-bottom: none;
+    }
+
+    .insight-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .insight-title {
+        font-size: 13px;
+        color: #718096;
+        margin-bottom: 5px;
+    }
+
+    .insight-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #2d3748;
+        margin-bottom: 3px;
+    }
+
+    .insight-description {
+        font-size: 12px;
+        color: #a0aec0;
+    }
+
+    .week-calendar {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+    }
+
+    .calendar-day {
+        background: #f7fafc;
+        border-radius: 8px;
+        padding: 12px;
+        text-align: center;
+    }
+
+    .calendar-day-header {
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+
+    .calendar-day-body {
+        font-size: 20px;
+        font-weight: bold;
+        color: #667eea;
+    }
+</style>
     <!-- Bootstrap & ChartJS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+   
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     
     <script>
         // Sidebar Toggle Functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const sidebar = document.querySelector('.sidebar');
-            const sidebarOverlay = document.querySelector('.sidebar-overlay');
-            const sidebarToggle = document.querySelector('.sidebar-toggle');
-            const sidebarClose = document.querySelector('.sidebar-close');
-            
-            function openSidebar() {
-                sidebar.classList.add('show');
-                sidebarOverlay.classList.add('show');
-            }
-            
-            function closeSidebar() {
-                sidebar.classList.remove('show');
-                sidebarOverlay.classList.remove('show');
-            }
-            
-            sidebarToggle.addEventListener('click', openSidebar);
-            sidebarClose.addEventListener('click', closeSidebar);
-            sidebarOverlay.addEventListener('click', closeSidebar);
+            document.addEventListener('DOMContentLoaded', function() {
+                const sidebarToggle = document.querySelector('.sidebar-toggle');
+                const sidebarClose = document.querySelector('.sidebar-close');
+                const sidebar = document.querySelector('.sidebar');
+                const overlay = document.querySelector('.sidebar-overlay');
+                
+                if (sidebarToggle) {
+                    sidebarToggle.addEventListener('click', function() {
+                        sidebar.classList.add('show');
+                        overlay.classList.add('show');
+                    });
+                }
+                
+                if (sidebarClose) {
+                    sidebarClose.addEventListener('click', function() {
+                        sidebar.classList.remove('show');
+                        overlay.classList.remove('show');
+                    });
+                }
+                
+                if (overlay) {
+                    overlay.addEventListener('click', function() {
+                        sidebar.classList.remove('show');
+                        overlay.classList.remove('show');
+                    });
+                }
             });
-            // Chart initialization
-            const progressData = {
-            labels: ['Completed', 'Pending', 'Overdue'],
-            datasets: [{
-                data: [
-                    {{ completed_percent }},
-                    {{ pending_percent }},
-                    {{ overdue_percent }}
-                ],
-                backgroundColor: [
-                    'rgba(40, 167, 69, 0.8)',     // Green for completed
-                    'rgba(255, 193, 7, 0.8)',     // Yellow for pending
-                    'rgba(220, 53, 69, 0.8)'      // Red for overdue
-                ],
-                borderColor: [
-                    'rgba(40, 167, 69, 1)',
-                    'rgba(255, 193, 7, 1)',
-                    'rgba(220, 53, 69, 1)'
-                ],
-                borderWidth: 2,
-                cutout: '70%'
-            }]
-        };
 
-        const config = {
-            type: 'doughnut',
-            data: progressData,
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            boxWidth: 20,
-                            padding: 15
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            const progressChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: {{ week_labels|safe }},
+                    datasets: [
+                        {
+                            label: 'Expected',
+                            data: {{ expected_submissions|safe }},
+                            backgroundColor: 'rgba(226, 232, 240, 0.8)',
+                            borderColor: 'rgba(226, 232, 240, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Submitted',
+                            data: {{ actual_submissions|safe }},
+                            backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                            borderColor: 'rgba(102, 126, 234, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            ticks: {
+                                stepSize: 1
+                            }
                         }
                     },
-                    tooltip: {
-                        callbacks: {
-                            label: function (tooltipItem) {
-                                return `${tooltipItem.label}: ${tooltipItem.raw}%`;
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + (context.parsed.y === 1 ? 'Yes' : 'No');
+                                }
                             }
                         }
                     }
                 }
-            },
-        };
+            });
+                    
+            const ctx2 = document.getElementById('hoursChart').getContext('2d');
+            const hoursChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Hours Logged', 'Hours Remaining'],
+                    datasets: [{
+                        data: [
+                            {{ contract_stats.total_hours_logged }},
+                            Math.max(0, {{ contract_stats.expected_hours }} - {{ contract_stats.total_hours_logged }})
+                        ],
+                        backgroundColor: [
+                            'rgba(102, 126, 234, 0.8)',
+                            'rgba(226, 232, 240, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(102, 126, 234, 1)',
+                            'rgba(226, 232, 240, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return label + ': ' + value.toFixed(1) + ' hrs (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
 
-        const ctx = document.getElementById('progressDoughnutChart').getContext('2d');
-        new Chart(ctx, config);
-                
+
+            // Auto-refresh notifications every 30 seconds
+            setInterval(function() {
+                // This would typically fetch new notifications via AJAX
+                console.log('Checking for new notifications...');
+            }, 30000);
+
+     
                 
     </script>
 </body>

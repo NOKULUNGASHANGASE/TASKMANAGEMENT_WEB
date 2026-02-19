@@ -2,11 +2,16 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-
-
+                
 
 
 class Task(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('overdue', 'Overdue'),
+    ]
     task_id = models.IntegerField(null=True, blank=True)
     
     supervisor = models.ForeignKey("Management.Supervisor", on_delete=models.CASCADE, related_name='tasks')
@@ -16,9 +21,20 @@ class Task(models.Model):
     date_completed = models.DateTimeField(null=True, blank=True)
     created= models.DateTimeField( auto_now_add=True)
     due_date = models.DateTimeField(default=timezone.now)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     
     def __str__(self):
         return self.title
+    
+    def save(self, *args, **kwargs):
+        
+        if self.date_completed:
+            self.status = 'completed'
+        elif self.due_date < timezone.now() and not self.date_completed:
+            self.status = 'overdue'
+        elif not self.status:
+            self.status = 'pending'
+        super().save(*args, **kwargs)
     
 class StudentTask(models.Model):
     STATUS_CHOICES = [
@@ -103,8 +119,6 @@ class Message(models.Model):
 
     def __str__(self):
         return self.subject
-
-
 
 
 

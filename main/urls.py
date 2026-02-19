@@ -28,12 +28,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     #home page
     path('', views.home, name='home'),
-     path('supervisor_dashboard/', views.supervisor_dashboard, name='supervisor_dashboard'),
-    #student tasks app url path
-    #path('studenttasks/', include('StudentTasks.urls')),
-    #path('student/', include('StudentTasks.urls', namespace='StudentTasks')),
-    path('students/', include(('StudentTasks.urls', 'StudentTasks'), namespace='StudentTasks')),
-
+    path('supervisor_dashboard/', views.supervisor_dashboard, name='supervisor_dashboard'),
+    path('students/', include('StudentTasks.urls', namespace='StudentTasks')),
     
     #Auth
     path('signup/', views.signupuser, name='signupuser'), #signup/
@@ -41,11 +37,9 @@ urlpatterns = [
     
     path('logoutuser/', views.logoutuser, name='logoutuser'),
     path('loginuser/', views.loginuser, name='loginuser'),
-     #tasks pages
-    #path('Mytasks/', views.Mytasks, name='Mytasks'),
+     
     path('createtask/', views.createtask, name='createtask'),
-    #path('supervisor_assign_task/', views.supervisor_assign_task, name='supervisor_assign_task'),
-    #help user to be able to create the form without signing in
+    
     path('accounts/login',views.loginuser, name="loginuser" ),
     path('update_user/<int:task_pk>/', views.update_user, name='update_user'),
     path('task/<int:task_pk>',views.viewtasks, name='viewtasks' ),
@@ -55,8 +49,7 @@ urlpatterns = [
     path('assign_task_to_student/<int:task_id>/', views.assign_task_to_student, name='assign_task_to_student'),
     
     
-   # year plan calender create and view
-    #path('create_year_plan/', views.create_year_plan, name='create_year_plan'),
+   
     path('view_year_plan/', views.view_year_plan, name='view_year_plan'),
     path('create_year_plan/<int:student_id>/', views.create_year_plan, name='create_year_plan'),
     
@@ -65,11 +58,7 @@ urlpatterns = [
   
     path('create_year_plan/', views.create_year_plan, name='create_year_plan'),
 
-    # And this one too:
-    #path('assign_task/<int:student_id>/', views.supervisor_assign_task, name='supervisor_assign_task'),
-    #path('supervisor_assign_task/<int:student_id>/', views.supervisor_assign_task, name='supervisor_assign_task'),
-
-    #email cornfirmation
+   
     
     
     #password reset

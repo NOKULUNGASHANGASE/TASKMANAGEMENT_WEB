@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.dispatch import receiver
 from .models import User, Supervisor, Student
 from django.core.exceptions import ValidationError
 
@@ -29,3 +30,4 @@ class SupervisorCreationForm(UserCreationForm):
         if commit:
             user.save()
         return user
+    

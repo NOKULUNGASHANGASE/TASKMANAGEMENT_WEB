@@ -9,6 +9,8 @@ from django.contrib.auth import views as auth_views
 app_name='StudentTasks'
 urlpatterns = [
     #path('admin/', admin.site.urls),
+    path('tasks/home/', views.student_tasks_home, name='student_tasks_home'),
+    path('', views.student_tasks_home, name='student_tasks_home'),
     path('', views.student_tasks_home, name='student_tasks_home'),
     path('contract_create/', views.contract_create, name='contract_create'),
     path('contract/<int:pk>/', views.contract_detail, name='contract_detail'),
@@ -16,6 +18,7 @@ urlpatterns = [
     path('contract/<int:pk>/delete/', views.contract_delete, name='contract_delete'),
     path('contract_list/', views.contract_list, name='contract_list'),
     # Reports URLs
+    path('reports/create/', views.create_weekly_report, name='create_weekly_report'),
     path('create_weekly_report/', views.create_weekly_report, name='create_weekly_report'),
     path('my_weekly_reports/', views.my_weekly_reports, name='my_weekly_reports'),
 

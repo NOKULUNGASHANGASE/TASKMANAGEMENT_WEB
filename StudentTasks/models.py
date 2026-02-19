@@ -8,10 +8,13 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from Management.models import Student
+
 
 
 class Contract(models.Model): 
     contract_id = models.CharField(max_length=20, unique=True, null=True, blank=True)
+    
     title = models.CharField(max_length=100, default="UWS intern Contract")
     description = models.TextField(blank=True)
     start_date = models.DateField(default=timezone.now)
@@ -24,31 +27,54 @@ class Contract(models.Model):
 
 
     def generate_time_periods(self):
-        return "Generated time periods"
+        return
+    
+    def get_student(self):
+       
+        from Management.models import Student  
+        try:
+            return Student.objects.get(contract=self)
+        except Student.DoesNotExist:
+            return None
+     
+    
     @property
     def contract_progress(self):
-        """Calculate overall progress percentage for dashboard"""
-        # Time-based progress
-        total_days = (self.end_date - self.start_date).days
-        days_passed = (timezone.now().date() - self.start_date).days
-        time_progress = min(100, max(0, (days_passed / total_days) * 100)) if total_days > 0 else 0
         
-        # Task-based progress
+       
+        total_days = (self.end_date - self.start_date).days
+        if total_days <= 0:
+            return 0
+        
+        days_passed = (timezone.now().date() - self.start_date).days
+        time_progress = min(100, max(0, (days_passed / total_days) * 100))
+        
+        from .models import WeeklyReport
+        student = self.get_student()
+        if not student:
+            return int(time_progress)
+        
         total_expected_hours = sum(task.expected_hours for task in self.weeklytask_set.all())
         completed_hours = sum(task.hours_spent for task in self.weeklytask_set.filter(status='COMPLETED'))
         task_progress = (completed_hours / total_expected_hours * 100) if total_expected_hours > 0 else 0
         
-        # Weighted average (50% time, 50% tasks)
         return round((time_progress * 0.5) + (task_progress * 0.5))
     
     @property
     def weeks_completed(self):
-        """Number of weeks completed in contract"""
-        return self.weeklyreport_set.filter(status='COMPLETED').count()
+        from .models import WeeklyReport
+        student = self.get_student()
+        if not student:
+            return 0
+        return WeeklyReport.objects.filter(
+            student=student, 
+            status='APPROVED'
+        ).count()
+
+        
     
     @property
     def weeks_remaining(self):
-        """Number of weeks remaining in contract"""
         total_weeks = ((self.end_date - self.start_date).days // 7) + 1
         return total_weeks - self.weeks_completed
 
@@ -56,7 +82,7 @@ class Contract(models.Model):
         days = 0
         current = self.start_date
         while current <= self.end_date:
-            if current.weekday() < 5:  # Weekdays only (Mon–Fri)
+            if current.weekday() < 5:   # only monday to friday not overtime for students
                 days += 1
             current += timezone.timedelta(days=1)
         return days
@@ -66,16 +92,25 @@ class Contract(models.Model):
  
     
     def total_w_hours(self):
-        return sum(task.hours_spent for task in self.weeklyreport_set.all())
+        student = self.get_student()
+        if not student:
+            return 0
+        
+        total = sum(
+            report.hours_spent 
+            for report in WeeklyReport.objects.filter(student=student)
+        )
+        return total
+       
+       
 
     def progress_percent(self):
-        total = self.total_day_hours()
+        total = self.total_day_hours()  #here we calculate the progress percentage for student
         if total == 0:
             return 0
         return round((self.total_w_hours() / total) * 100, 2)
     
     def get_week_choices(self):
-        """Generate week number choices based on contract dates and current date"""
         today = timezone.now().date()
         choices = []
         current_week_start = self.start_date
@@ -84,7 +119,7 @@ class Contract(models.Model):
         while current_week_start <= self.end_date:
             week_end = current_week_start + timezone.timedelta(days=6)
             
-            # Only include weeks that have ended or are current
+            
             if week_end <= today or (current_week_start <= today <= week_end):
                 week_str = f"Week {week_num} ({current_week_start.strftime('%d %b')} - {week_end.strftime('%d %b')})"
                 choices.append((week_num, week_str))
@@ -93,15 +128,29 @@ class Contract(models.Model):
             week_num += 1
         
         return choices
+    
     def get_week_dates(self, week_num):
-        """Get start and end dates for a specific week number"""
         week_start = self.start_date + timezone.timedelta(days=(week_num-1)*7)
         week_end = week_start + timezone.timedelta(days=6)
         return week_start, week_end
 
     
+    def __str__(self):
+        try:
+            student = self.get_student()
+            student_name = student.user.get_full_name() if student else 'No Student'
+            return f"{self.title} - {student_name}"
+        except Exception:
+            return f"{self.title} - Contract #{self.contract_id or self.pk}"
+
+    class Meta:
+        verbose_name = "Contract"
+        verbose_name_plural = "Contracts"
+        ordering = ['-created_at']
 
 
+
+        
 class WeeklyReport(models.Model):
     STATUS_CHOICES = [
         ('PENDING', 'Pending'),

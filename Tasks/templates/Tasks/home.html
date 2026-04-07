@@ -1,120 +1,1185 @@
 {% extends 'Tasks/base.html' %}
 {% load static %}
-{% block content%}
+{% block content %}
 <script src="https://cdn.jsdelivr.net/npm/swiffy-slider@1.6.0/dist/js/swiffy-slider.min.js" crossorigin="anonymous" defer></script>
 <link href="https://cdn.jsdelivr.net/npm/swiffy-slider@1.6.0/dist/css/swiffy-slider.min.css" rel="stylesheet" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 
 <style>
-    .swiffy-slider {
-        position: relative;
-        width: 100%;
-        height: 100vh; 
-        overflow: hidden;
-    }
-    
-    .slider-container {
-        height: 100%; 
-    }
-    
-    .slider-container li {
-        height: 100%; 
-    }
-    
-    .slider-container li img {
-        width: 100%;
-        height: 60%;
-        object-fit: cover; 
-        display: block;
-    }
-    .slide-text {
-        position: absolute;
-        top: 50%; 
-        left: 50%;
-        transform: translate(-50%, -50%); 
-        color: rgb(49, 40, 212); 
-        font-size: 2em; 
-        text-align: center;
-        z-index: 10; 
-        padding: 20px;
-        background-color: rgba(0, 0, 0, 0.5); 
-    }
-    .msgDiv{
-        padding:0.6rem;
-    
-        display:flex;
-        justify-content:center
-    }
-    .slider-text {
-        animation: slideIn 0.5s ease-out;
-    }
-    @media (max-width: 768px) {
-        .slider-text {
-            font-size: 1rem;
-            padding: 10px 20px;
-            bottom: 10px;
-        }
-    }
-   
+:root {
+  --navy:      #060f23;
+  --navy-mid:  #0b1e3d;
+  --navy-card: #0f2548;
+  --sky:       #38bdf8;
+  --sky-dim:   #1e7ab8;
+  --sky-light: #93d9fb;
+  --teal:      #2dd4bf;
+  --amber:     #fbbf24;
+  --white:     #ffffff;
+  --muted:     #94a3b8;
+  --border:    rgba(56,189,248,0.18);
+}
 
-    
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Sora',sans-serif;background:var(--navy);color:var(--white);overflow-x:hidden;}
 
 
+.msgDiv{padding:.8rem;display:flex;justify-content:center;background:rgba(56,189,248,.1);border-bottom:1px solid var(--sky);}
+.msgDiv p{color:var(--sky-light);font-weight:600;}
+
+
+.hero-wrapper{position:relative;width:100%;height:100vh;overflow:hidden;}
+.swiffy-slider,.slider-container,.slider-container li{height:100%;}
+.slider-container{list-style:none;}
+.slider-container li img{width:100%;height:100%;object-fit:cover;filter:brightness(.35) saturate(.8);}
+
+.hero-overlay{
+  position:absolute;inset:0;z-index:5;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:2rem;
+}
+
+.hero-badge{
+  display:inline-flex;align-items:center;gap:.5rem;
+  border:1px solid var(--sky);color:var(--sky-light);
+  padding:.4rem 1.4rem;font-size:.72rem;letter-spacing:4px;text-transform:uppercase;
+  margin-bottom:1.6rem;background:rgba(56,189,248,.07);
+  animation:fadeDown .7s ease both;
+}
+.hero-badge::before{content:'●';font-size:.5rem;color:var(--teal);animation:pulse 2s infinite;}
+
+.hero-title{
+  font-family:'Lora',serif;
+  font-size:clamp(2.4rem,6.5vw,5.2rem);font-weight:700;
+  color:var(--white);line-height:1.1;
+  animation:fadeDown .8s .1s ease both;
+}
+.hero-title em{font-style:italic;color:var(--sky);}
+
+.hero-sub{
+  margin-top:1.4rem;font-size:clamp(.9rem,1.6vw,1.1rem);
+  color:var(--muted);max-width:640px;line-height:1.8;
+  animation:fadeDown .8s .2s ease both;
+}
+
+.hero-cta{
+  margin-top:2.4rem;display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;
+  animation:fadeDown .8s .3s ease both;
+}
+
+.btn-sky{background:var(--sky);color:var(--navy-mid);padding:.9rem 2.2rem;font-weight:700;font-size:.9rem;border:none;text-decoration:none;transition:.3s;letter-spacing:.5px;}
+.btn-sky:hover{background:var(--sky-light);transform:translateY(-2px);}
+
+.btn-ghost{background:transparent;color:var(--white);padding:.9rem 2.2rem;border:1px solid rgba(255,255,255,.35);font-size:.9rem;text-decoration:none;transition:.3s;letter-spacing:.5px;}
+.btn-ghost:hover{border-color:var(--sky);color:var(--sky);}
+
+.slide-caption{
+  position:absolute;bottom:14%;left:50%;transform:translateX(-50%);
+  text-align:center;z-index:4;
+}
+.slide-caption span{
+  display:inline-block;background:rgba(56,189,248,.15);
+  border:1px solid var(--sky);color:var(--sky-light);
+  padding:.35rem 1.2rem;font-size:.75rem;letter-spacing:3px;text-transform:uppercase;
+}
+
+
+.scroll-arrow{
+  position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);
+  z-index:10;display:flex;flex-direction:column;align-items:center;gap:.3rem;
+  color:rgba(255,255,255,.3);font-size:.65rem;letter-spacing:2px;text-transform:uppercase;
+}
+.scroll-arrow-line{width:1px;height:40px;background:linear-gradient(var(--sky),transparent);animation:scrollPulse 2s infinite;}
+
+
+.counter-strip{
+  background:var(--navy-mid);
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  padding:2.5rem 1rem;
+}
+.counter-inner{max-width:1100px;margin:0 auto;display:flex;justify-content:center;flex-wrap:wrap;gap:0;}
+.counter-item{
+  text-align:center;padding:1rem 2.8rem;
+  border-right:1px solid rgba(255,255,255,.08);
+  animation:fadeUp .6s ease both;
+}
+.counter-item:last-child{border-right:none;}
+.counter-num{
+  font-family:'Lora',serif;font-size:2.6rem;font-weight:700;
+  color:var(--sky);line-height:1;display:flex;align-items:baseline;gap:.2rem;justify-content:center;
+}
+.counter-num sup{font-size:1.2rem;color:var(--teal);}
+.counter-label{font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-top:.4rem;}
+.counter-sub{font-size:.75rem;color:var(--teal);margin-top:.2rem;}
+
+
+.sec{padding:6rem 2rem;max-width:1200px;margin:0 auto;}
+.sec-label{font-size:.7rem;letter-spacing:4px;text-transform:uppercase;color:var(--sky);margin-bottom:.7rem;}
+.sec-title{font-family:'Lora',serif;font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;color:var(--white);line-height:1.25;margin-bottom:1rem;}
+.sec-desc{font-size:.95rem;color:var(--muted);line-height:1.8;max-width:580px;}
+.dark-bg{background:var(--navy-mid);}
+
+
+.features-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));
+  gap:1.4rem;margin-top:3rem;
+}
+.feat-card{
+  background:var(--navy-card);border:1px solid var(--border);
+  padding:2rem;position:relative;overflow:hidden;transition:.3s;
+}
+.feat-card::after{
+  content:'';position:absolute;top:0;left:0;width:3px;height:0;
+  background:linear-gradient(var(--sky),var(--teal));transition:.35s;
+}
+.feat-card:hover{border-color:rgba(56,189,248,.4);transform:translateY(-4px);}
+.feat-card:hover::after{height:100%;}
+.feat-icon{font-size:1.8rem;margin-bottom:1rem;}
+.feat-title{font-size:1.05rem;font-weight:700;color:var(--white);margin-bottom:.6rem;}
+.feat-desc{font-size:.85rem;color:var(--muted);line-height:1.7;}
+.feat-tag{
+  display:inline-block;margin-top:.9rem;
+  background:rgba(56,189,248,.1);border:1px solid var(--sky);
+  color:var(--sky-light);padding:.2rem .7rem;font-size:.65rem;letter-spacing:2px;text-transform:uppercase;
+}
+
+
+.graphs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1.5rem;margin-top:3rem;}
+
+.graph-card{
+  background:var(--navy-card);border:1px solid var(--border);
+  padding:1.8rem;border-radius:0;
+}
+.graph-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;}
+.graph-card-title{font-size:.85rem;font-weight:700;color:var(--white);}
+.graph-badge{font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--teal);background:rgba(45,212,191,.1);border:1px solid rgba(45,212,191,.3);padding:.2rem .6rem;}
+
+
+.bar-chart{display:flex;align-items:flex-end;gap:.5rem;height:120px;}
+.bar-wrap{display:flex;flex-direction:column;align-items:center;flex:1;gap:.4rem;}
+.bar{
+  width:100%;border-radius:2px 2px 0 0;
+  position:relative;transition:height 1.5s cubic-bezier(.25,.46,.45,.94);
+}
+.bar-val{font-size:.65rem;color:var(--muted);text-align:center;}
+.bar-lbl{font-size:.6rem;color:var(--muted);text-align:center;}
+
+
+.donut-wrap{display:flex;align-items:center;gap:1.5rem;}
+.donut{width:100px;height:100px;flex-shrink:0;}
+.donut-svg circle{fill:none;stroke-width:10;}
+.donut-legend{flex:1;}
+.legend-item{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;}
+.legend-dot{width:8px;height:8px;border-radius:50%;}
+.legend-label{font-size:.75rem;color:var(--muted);}
+.legend-val{font-size:.75rem;color:var(--white);font-weight:600;margin-left:auto;}
+
+
+.sparkline-wrap{height:80px;position:relative;}
+.spark-svg{width:100%;height:100%;}
+
+
+.radials{display:flex;gap:1rem;flex-wrap:wrap;justify-content:space-around;}
+.radial-item{text-align:center;}
+.radial-svg{width:70px;height:70px;}
+.radial-lbl{font-size:.7rem;color:var(--muted);margin-top:.4rem;}
+.radial-val{font-size:.85rem;font-weight:700;color:var(--white);}
+
+
+.partner-section{
+  background:linear-gradient(135deg,var(--navy-mid) 0%,#081527 100%);
+  padding:6rem 2rem;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+}
+.partner-inner{max-width:1200px;margin:0 auto;}
+
+.partner-layout{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;margin-top:3rem;}
+
+.partner-text .highlight-box{
+  background:rgba(56,189,248,.06);border:1px solid var(--border);
+  padding:1.5rem;margin-top:2rem;
+}
+.highlight-box h4{color:var(--sky);font-size:.85rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:.8rem;}
+.highlight-box ul{list-style:none;}
+.highlight-box ul li{
+  font-size:.85rem;color:var(--muted);padding:.4rem 0;
+  border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:.6rem;
+}
+.highlight-box ul li::before{content:'→';color:var(--teal);font-size:.8rem;}
+
+.logo-carousel{overflow:hidden;margin-top:2rem;}
+.logo-track{
+  display:flex;gap:1.5rem;
+  animation:scrollLogos 18s linear infinite;
+  width:max-content;
+}
+.logo-card{
+  background:var(--navy-card);border:1px solid var(--border);
+  padding:1.2rem 2rem;min-width:160px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.8rem;font-weight:600;color:var(--muted);
+  letter-spacing:1px;white-space:nowrap;transition:.3s;
+  flex-shrink:0;
+}
+.logo-card:hover{border-color:var(--sky);color:var(--sky);}
+
+
+.timeline-section{padding:6rem 2rem;}
+.timeline-inner{max-width:1200px;margin:0 auto;}
+
+.timeline-track{
+  position:relative;margin-top:3rem;padding-left:2rem;
+}
+.timeline-track::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;
+  width:2px;background:linear-gradient(to bottom,var(--sky),var(--teal),transparent);
+}
+.timeline-item{
+  position:relative;padding:0 0 3rem 2.5rem;
+}
+.timeline-item::before{
+  content:'';position:absolute;left:-6px;top:4px;
+  width:14px;height:14px;border-radius:50%;
+  background:var(--navy-mid);border:2px solid var(--sky);
+}
+.timeline-item.active::before{background:var(--sky);box-shadow:0 0 12px var(--sky);}
+.timeline-week{font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--teal);margin-bottom:.4rem;}
+.timeline-title{font-size:1rem;font-weight:700;color:var(--white);margin-bottom:.4rem;}
+.timeline-desc{font-size:.85rem;color:var(--muted);line-height:1.6;}
+.timeline-pills{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.7rem;}
+.pill{background:rgba(56,189,248,.1);border:1px solid var(--border);color:var(--sky-light);padding:.2rem .7rem;font-size:.65rem;letter-spacing:1px;}
+
+
+.ai-section{padding:6rem 2rem;background:var(--navy-mid);}
+.ai-inner{max-width:1200px;margin:0 auto;}
+.ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center;margin-top:3rem;}
+.ai-visual{background:var(--navy-card);border:1px solid var(--border);padding:2rem;}
+.ai-score-ring{display:flex;justify-content:center;margin-bottom:1.5rem;}
+.ring-svg{width:160px;height:160px;}
+.ai-metrics{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.5rem;}
+.ai-metric{background:rgba(56,189,248,.05);border:1px solid var(--border);padding:1rem;text-align:center;}
+.ai-metric-val{font-family:'Lora',serif;font-size:1.6rem;font-weight:700;color:var(--sky);}
+.ai-metric-label{font-size:.7rem;color:var(--muted);margin-top:.2rem;letter-spacing:1px;text-transform:uppercase;}
+.ai-insights{display:flex;flex-direction:column;gap:1rem;margin-top:1.5rem;}
+.ai-insight{
+  background:var(--navy-card);border:1px solid var(--border);
+  padding:1.2rem 1.5rem;display:flex;gap:1rem;align-items:flex-start;
+}
+.ai-insight-icon{font-size:1.2rem;flex-shrink:0;}
+.ai-insight-text{font-size:.85rem;color:var(--muted);line-height:1.6;}
+.ai-insight-text strong{color:var(--white);display:block;margin-bottom:.2rem;font-size:.9rem;}
+.predict-badge{
+  display:inline-flex;align-items:center;gap:.5rem;
+  background:linear-gradient(135deg,rgba(56,189,248,.15),rgba(45,212,191,.1));
+  border:1px solid rgba(45,212,191,.3);color:var(--teal);
+  padding:.4rem 1rem;font-size:.72rem;letter-spacing:2px;text-transform:uppercase;
+  margin-bottom:1rem;
+}
+
+
+.dashboard-section{padding:6rem 2rem;}
+.dashboard-inner{max-width:1200px;margin:0 auto;}
+.dashboard-frame{
+  background:var(--navy-card);border:1px solid var(--border);
+  padding:1rem;margin-top:3rem;position:relative;overflow:hidden;
+}
+.dashboard-bar{
+  background:var(--navy-mid);padding:.6rem 1rem;
+  display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;border-bottom:1px solid var(--border);
+}
+.db-dot{width:10px;height:10px;border-radius:50%;}
+.db-title{flex:1;text-align:center;font-size:.75rem;color:var(--muted);letter-spacing:1px;}
+.db-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1rem;margin-bottom:1rem;}
+.db-widget{background:var(--navy-mid);border:1px solid var(--border);padding:1.2rem;text-align:center;}
+.db-widget-num{font-family:'Lora',serif;font-size:1.8rem;font-weight:700;}
+.db-widget-label{font-size:.65rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:.2rem;}
+.db-lower{display:grid;grid-template-columns:2fr 1fr;gap:1rem;}
+.db-chart-area{background:var(--navy-mid);border:1px solid var(--border);padding:1.2rem;}
+.db-chart-title{font-size:.75rem;color:var(--muted);margin-bottom:1rem;letter-spacing:1px;text-transform:uppercase;}
+.mini-bars{display:flex;align-items:flex-end;gap:.4rem;height:80px;}
+.mini-bar{border-radius:2px 2px 0 0;flex:1;animation:barGrow 1.5s ease both;}
+.db-list{background:var(--navy-mid);border:1px solid var(--border);padding:1.2rem;}
+.db-list-item{
+  display:flex;align-items:center;gap:.6rem;
+  padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.04);
+  font-size:.75rem;
+}
+.db-avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;flex-shrink:0;}
+.db-name{color:var(--white);flex:1;}
+.db-score{color:var(--sky);font-weight:600;}
+
+
+.testimonials-section{padding:6rem 2rem;background:var(--navy-mid);}
+.testimonials-inner{max-width:1200px;margin:0 auto;}
+.testi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;margin-top:3rem;}
+.testi-card{
+  background:var(--navy-card);border:1px solid var(--border);
+  padding:2rem;position:relative;
+}
+.testi-card::before{
+  content:'"';position:absolute;top:1rem;right:1.5rem;
+  font-family:'Lora',serif;font-size:5rem;color:rgba(56,189,248,.1);line-height:1;
+}
+.testi-stars{color:var(--amber);font-size:.9rem;letter-spacing:2px;margin-bottom:1rem;}
+.testi-text{font-size:.9rem;color:rgba(255,255,255,.8);line-height:1.75;font-style:italic;margin-bottom:1.5rem;}
+.testi-author{display:flex;align-items:center;gap:.8rem;}
+.testi-avatar{
+  width:44px;height:44px;border-radius:50%;border:2px solid var(--sky);
+  display:flex;align-items:center;justify-content:center;font-size:1rem;
+  background:var(--navy-mid);
+}
+.testi-name{font-weight:700;font-size:.9rem;color:var(--white);}
+.testi-role{font-size:.75rem;color:var(--muted);}
+.testi-org{font-size:.7rem;color:var(--sky);margin-top:.1rem;}
+
+
+.download-section{
+  background:linear-gradient(135deg,var(--navy-mid),#0a1f3f);
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  padding:6rem 2rem;
+}
+.download-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;}
+.report-mockup{
+  background:var(--navy-card);border:1px solid var(--border);
+  padding:2rem;
+}
+.report-header{display:flex;justify-content:space-between;align-items:center;padding-bottom:1rem;border-bottom:1px solid var(--border);margin-bottom:1.5rem;}
+.report-logo{font-family:'Lora',serif;font-size:1.1rem;color:var(--sky);}
+.report-date{font-size:.7rem;color:var(--muted);}
+.report-row{display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.report-field{font-size:.8rem;color:var(--muted);}
+.report-val{font-size:.8rem;color:var(--white);font-weight:600;}
+.report-score-bar{margin-top:1.5rem;}
+.score-label{font-size:.7rem;color:var(--muted);margin-bottom:.4rem;display:flex;justify-content:space-between;}
+.score-track{height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;}
+.score-fill{height:100%;border-radius:3px;transition:width 1.5s ease;}
+
+.download-btns{display:flex;flex-direction:column;gap:1rem;margin-top:2.5rem;}
+.download-btn{
+  display:flex;align-items:center;gap:1rem;
+  background:var(--navy-card);border:1px solid var(--border);
+  padding:1rem 1.5rem;text-decoration:none;transition:.3s;color:var(--white);
+}
+.download-btn:hover{border-color:var(--sky);transform:translateX(4px);}
+.download-btn-icon{font-size:1.5rem;}
+.download-btn-text strong{display:block;font-size:.9rem;color:var(--white);}
+.download-btn-text span{font-size:.75rem;color:var(--muted);}
+.download-btn-arrow{margin-left:auto;color:var(--sky);}
+
+
+.cta-section{
+  padding:7rem 2rem;text-align:center;
+  background:radial-gradient(ellipse at center,rgba(56,189,248,.08) 0%,transparent 70%);
+}
+.cta-inner{max-width:700px;margin:0 auto;}
+.cta-title{font-family:'Lora',serif;font-size:clamp(2rem,4vw,3.2rem);font-weight:700;color:var(--white);line-height:1.2;margin-bottom:1.2rem;}
+.cta-title em{font-style:italic;color:var(--sky);}
+.cta-desc{font-size:.95rem;color:var(--muted);line-height:1.8;margin-bottom:2.5rem;}
+
+
+footer{background:#030810;border-top:1px solid var(--border);padding:4rem 2rem 2rem;}
+.footer-inner{max-width:1200px;margin:0 auto;}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;padding-bottom:3rem;border-bottom:1px solid rgba(255,255,255,.06);}
+.footer-brand h3{font-family:'Lora',serif;font-size:1.5rem;color:var(--sky);margin-bottom:.8rem;}
+.footer-brand p{font-size:.85rem;color:var(--muted);line-height:1.7;max-width:250px;margin-bottom:1.5rem;}
+.social-row{display:flex;gap:.7rem;}
+.social-btn{
+  width:34px;height:34px;border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--muted);text-decoration:none;font-size:.8rem;transition:.3s;
+}
+.social-btn:hover{background:var(--sky);color:var(--navy-mid);border-color:var(--sky);}
+.footer-col h4{font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--sky);margin-bottom:1.2rem;}
+.footer-col ul{list-style:none;}
+.footer-col ul li{margin-bottom:.6rem;}
+.footer-col ul li a{font-size:.85rem;color:var(--muted);text-decoration:none;transition:.3s;}
+.footer-col ul li a:hover{color:var(--sky-light);}
+.footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:2rem;flex-wrap:wrap;gap:1rem;}
+.footer-bottom p{font-size:.78rem;color:var(--muted);}
+.footer-links{display:flex;gap:1.5rem;}
+.footer-links a{font-size:.78rem;color:var(--muted);text-decoration:none;transition:.3s;}
+.footer-links a:hover{color:var(--sky);}
+
+
+@keyframes fadeDown{from{opacity:0;transform:translateY(-18px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:.6;}50%{opacity:1;}}
+@keyframes scrollPulse{0%,100%{opacity:.3;}50%{opacity:1;}}
+@keyframes barGrow{from{transform:scaleY(0);transform-origin:bottom;}to{transform:scaleY(1);}}
+@keyframes scrollLogos{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+@keyframes countUp{from{opacity:0;}to{opacity:1;}}
+@keyframes ringDraw{from{stroke-dashoffset:440;}to{stroke-dashoffset:var(--target);}}
+
+
+@media(max-width:900px){
+  .ai-grid,.download-inner,.partner-layout{grid-template-columns:1fr;}
+  .footer-grid{grid-template-columns:1fr 1fr;}
+  .db-grid{grid-template-columns:1fr 1fr;}
+  .db-lower{grid-template-columns:1fr;}
+}
+@media(max-width:600px){
+  .counter-item{padding:1rem 1.5rem;}
+  .footer-grid{grid-template-columns:1fr;}
+  .hero-cta{flex-direction:column;align-items:center;}
+}
 </style>
 
-
-<div>
-
-   {% if messages %}
-
-
-        <div>
-
-            {% for message in messages %}
+{% if messages %}
+<div>{% for message in messages %}
+  <div class="{{ message.tags }} msgDiv"><p>{{ message }}</p></div>
+{% endfor %}</div>
+{% endif %}
 
 
-                <div class="{{ message.tags }}  msgDiv">
-                    <p>{{message}}</p>
-                </div>
-
-                <br/>
-                {{ message.tags }}
-            {% endfor %}
-        </div>
-
-   {%endif %}
-    </div>
-
-   
-<div class="swiffy-slider slider-nav-autoplay" data-slider-nav-autoplay-interval="3000">
+<div class="hero-wrapper">
+  <div class="swiffy-slider slider-nav-autoplay" data-slider-nav-autoplay-interval="4500">
     <ul class="slider-container">
-        <li><img src="{% static 'Tasks/image0.jpg'%}" alt="Image 1" >
-        <div class="slider-text">A simple and intuitive web app to organize daily tasks, Helps manage time better with due dates, priorities, and categories</div>
-    </li>
-    
-        <li><img src="{% static 'Tasks/image8.jpg'%}" alt="Image 2">
-        <div class="slider-text">Reduces stress by keeping track of everything in one place</div>
-    </li>
-    
-    <li>
-        <img src="{% static 'Tasks/image9.jpg'%}" alt="Image 3">
-       <div class="slider-text">Boosts productivity by keeping tasks organized.</div>
-    </li>
-
-        <li><img src="{% static 'Tasks/image5.jpg'%}" alt="Image 4">
-        <div class="slider-text">Helps with goal setting and time management</div>
-    </li>
-    
+      <li>
+        <img src="{% static 'Tasks/image0.jpg' %}" alt="Student Tasks">
+        <div class="slide-caption"><span></span></div>
+      </li>
+      <li>
+        <img src="{% static 'Tasks/image8.jpg' %}" alt="Performance Tracking">
+        <div class="slide-caption"><span></span></div>
+      </li>
+      <li>
+        <img src="{% static 'Tasks/image9.jpg' %}" alt="Supervisor Rating">
+        <div class="slide-caption"><span></span></div>
+      </li>
+      <li>
+        <img src="{% static 'Tasks/image5.jpg' %}" alt="Analytics">
+        <div class="slide-caption"><span></span></div>
+      </li>
     </ul>
     <button type="button" class="slider-nav"></button>
     <button type="button" class="slider-nav slider-nav-next"></button>
+  </div>
 
-    <div class="slider-indicators">
-        <button class="active"></button>
-        
+  <div class="hero-overlay">
+    <div class="hero-badge">Internship, Lernearship & In-Service Tasks  Management Platform</div>
+    <h1 class="hero-title">
+      Smart <em>Student Task</em><br>&amp; Performance Dashboard
+    </h1>
+    <p class="hero-sub">
+      A centralized platform bridging institutions and organizations — enabling supervisors to assign tasks, 
+      rate student performance, eneble student to Submit their weekly report, align training calendars to diploma or Quelification requirements, and generate professional reports for employement opportunities.
+    </p>
+    <div class="hero-cta">
+      <a href="" class="btn-sky">Register</a>
+      <a href="" class="btn-ghost">Login to Dashboard</a>
+    </div>
+  </div>
+
+  <div class="scroll-arrow">
+    <div class="scroll-arrow-line"></div>
+    <span>Scroll</span>
+  </div>
 </div>
+
+
+<div class="counter-strip">
+  <div class="counter-inner">
+    <div class="counter-item">
+      <div class="counter-num"><span class="count" data-target="4820">0</span><sup>+</sup></div>
+      <div class="counter-label">Active Students contracts</div>
+      <div class="counter-sub"> 2026 for 45 programmes</div>
+    </div>
+    <div class="counter-item">
+      <div class="counter-num"><span class="count" data-target="312">0</span><sup>+</sup></div>
+      <div class="counter-label">Supervisors</div>
+      <div class="counter-sub">Across 9 provinces</div>
+    </div>
+    <div class="counter-item">
+      <div class="counter-num"><span class="count" data-target="96">0</span><sup>%</sup></div>
+      <div class="counter-label">Completion Rate</div>
+      <div class="counter-sub">Industry leading</div>
+    </div>
+    <div class="counter-item">
+      <div class="counter-num"><span class="count" data-target="147">0</span><sup>+</sup></div>
+      <div class="counter-label">Partner Organization</div>
+      <div class="counter-sub">& Institutions</div>
+    </div>
+    <div class="counter-item">
+      <div class="counter-num"><span class="count" data-target="28600">0</span><sup>+</sup></div>
+      <div class="counter-label">Tasks Completed</div>
+      <div class="counter-sub">Active programmes</div>
+    </div>
+  </div>
 </div>
 
 
-{% endblock%}
+<div class="sec" style="max-width:1200px;margin:0 auto;padding:6rem 2rem;">
+  <div class="sec-label">Core Features</div>
+  <h2 class="sec-title">Everything Needed to Manage<br>In-Service Training, Internship & Learnerships</h2>
+  <p class="sec-desc">Built for institutions, organizations and students to align internship duties with quelification requirements — seamlessly.</p>
+
+  <div class="features-grid">
+    <div class="feat-card">
+      <div class="feat-icon">📋</div>
+      <h3 class="feat-title">Task Assignment Engine</h3>
+      <p class="feat-desc">Supervisors assign weekly tasks linked directly to graduates. Students get clear, structured Task With due dates.</p>
+      <span class="feat-tag">Core</span>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">⭐</div>
+      <h3 class="feat-title">Weekly Performance Rating</h3>
+      <p class="feat-desc">Rate student performance per task on a standardized scale. Ratings feed directly into the final report.</p>
+      <span class="feat-tag">Evaluation</span>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📊</div>
+      <h3 class="feat-title">Performance Analytics</h3>
+      <p class="feat-desc">Visual trend charts, skill matrices, and progress dashboards give a full picture of each student's internship journey.</p>
+      <span class="feat-tag">Analytics</span>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🗓️</div>
+      <h3 class="feat-title">Organization Calendar Planner</h3>
+      <p class="feat-desc">Organizations set  in-service training calendar aligned with Programme requirements so students stay on track for during programme period.</p>
+      <span class="feat-tag">Planning</span>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🤝</div>
+      <h3 class="feat-title">Institution and Organization Collaboration</h3>
+      <p class="feat-desc">Institutions publish Insarvice requirements reports. Partner organizations map their placements and duties to meet those requirements.</p>
+      <span class="feat-tag">Partnership</span>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📄</div>
+      <h3 class="feat-title">Downloadable Reports</h3>
+      <p class="feat-desc">Generate professional PDF performance reports per student, per group, or per organization — ready for submission.</p>
+      <span class="feat-tag">Reports</span>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🤖</div>
+      <h3 class="feat-title">AI Performance Prediction</h3>
+      <p class="feat-desc">Machine-learning engine predicts student diploma readiness based on task completion trends and rating of submited reports.</p>
+      <span class="feat-tag">AI Powered</span>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🔔</div>
+      <h3 class="feat-title">Smart Notifications</h3>
+      <p class="feat-desc">Automated alerts for overdue tasks, upcoming evaluations, and calendar milestones keep everyone on schedule.</p>
+      <span class="feat-tag">Automation</span>
+    </div>
+  </div>
+</div>
+
+
+<div style="background:var(--navy-mid);padding:6rem 2rem;border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+  <div style="max-width:1200px;margin:0 auto;">
+    <div class="sec-label">Live Analytics</div>
+    <h2 class="sec-title">Real-Time Performance Insights</h2>
+    <p class="sec-desc">Data visualizations that give supervisors and institutions a clear view of student progress across all placements.</p>
+
+    <div class="graphs-grid">
+      
+      <div class="graph-card">
+        <div class="graph-card-header">
+          <span class="graph-card-title">Weekly Task Completions</span>
+          <span class="graph-badge">Live</span>
+        </div>
+        <div class="bar-chart" id="barChart">
+          <div class="bar-wrap"><div class="bar" style="height:65%;background:linear-gradient(to top,var(--sky-dim),var(--sky));"></div><div class="bar-val">3</div><div class="bar-lbl">W1</div></div>
+          <div class="bar-wrap"><div class="bar" style="height:80%;background:linear-gradient(to top,var(--sky-dim),var(--sky));"></div><div class="bar-val">5</div><div class="bar-lbl">W2</div></div>
+          <div class="bar-wrap"><div class="bar" style="height:55%;background:linear-gradient(to top,var(--sky-dim),var(--sky));"></div><div class="bar-val">6</div><div class="bar-lbl">W3</div></div>
+          <div class="bar-wrap"><div class="bar" style="height:90%;background:linear-gradient(to top,var(--sky-dim),var(--sky));"></div><div class="bar-val">5</div><div class="bar-lbl">W4</div></div>
+          <div class="bar-wrap"><div class="bar" style="height:75%;background:linear-gradient(to top,var(--teal),var(--sky));"></div><div class="bar-val">8</div><div class="bar-lbl">W5</div></div>
+          <div class="bar-wrap"><div class="bar" style="height:95%;background:linear-gradient(to top,var(--teal),var(--sky-light));"></div><div class="bar-val">7</div><div class="bar-lbl">W6</div></div>
+        </div>
+        <div style="margin-top:.8rem;font-size:.7rem;color:var(--muted);">Avg:  tasks/week </div>
+      </div>
+
+      
+      <div class="graph-card">
+        <div class="graph-card-header">
+          <span class="graph-card-title">Student Rating </span>
+          <span class="graph-badge">WEEK 20 of WEEK 54</span>
+        </div>
+        <div class="donut-wrap">
+          <div class="donut">
+            <svg class="donut-svg" viewBox="0 0 36 36">
+              <circle style="stroke:#0b1e3d;" cx="18" cy="18" r="15.9" stroke-width="4" fill="none"/>
+              <circle style="stroke:var(--sky);stroke-dasharray:45,100;stroke-dashoffset:25;" cx="18" cy="18" r="15.9" stroke-width="4" fill="none" stroke-linecap="round"/>
+              <circle style="stroke:var(--teal);stroke-dasharray:30,100;stroke-dashoffset:-20;" cx="18" cy="18" r="15.9" stroke-width="4" fill="none" stroke-linecap="round"/>
+              <circle style="stroke:var(--amber);stroke-dasharray:18,100;stroke-dashoffset:-50;" cx="18" cy="18" r="15.9" stroke-width="4" fill="none" stroke-linecap="round"/>
+              <circle style="stroke:#ef4444;stroke-dasharray:7,100;stroke-dashoffset:-68;" cx="18" cy="18" r="15.9" stroke-width="4" fill="none" stroke-linecap="round"/>
+              <text x="18" y="20" text-anchor="middle" font-size="5" fill="white" font-family="Lora,serif">96%</text>
+            </svg>
+          </div>
+          <div class="donut-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--sky);"></div><span class="legend-label">Excellent (4–5★)</span><span class="legend-val">45%</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--teal);"></div><span class="legend-label">Good (3–4★)</span><span class="legend-val">30%</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--amber);"></div><span class="legend-label">Average (2–3★)</span><span class="legend-val">18%</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div><span class="legend-label">Needs Work (&lt;2★)</span><span class="legend-val">7%</span></div>
+          </div>
+        </div>
+        <div style="margin-top:1rem;font-size:.7rem;color:var(--muted);">96% of students rated satisfactory or above</div>
+      </div>
+
+
+      <div class="graph-card">
+        <div class="graph-card-header">
+          <span class="graph-card-title">Average Skill Scores</span>
+          <span class="graph-badge">Cohort Analisys View</span>
+        </div>
+        <div class="radials">
+          <div class="radial-item">
+            <svg class="radial-svg" viewBox="0 0 36 36">
+              <circle cx="18" cy="18" r="15.9" fill="none" stroke="#0b2040" stroke-width="3"/>
+              <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--sky)" stroke-width="3" stroke-dasharray="75 25" stroke-dashoffset="25" stroke-linecap="round"/>
+              <text x="18" y="20" text-anchor="middle" font-size="6" fill="white" font-family="Lora">75%</text>
+            </svg>
+            <div class="radial-lbl">Technical</div>
+          </div>
+          <div class="radial-item">
+            <svg class="radial-svg" viewBox="0 0 36 36">
+              <circle cx="18" cy="18" r="15.9" fill="none" stroke="#0b2040" stroke-width="3"/>
+              <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--teal)" stroke-width="3" stroke-dasharray="88 12" stroke-dashoffset="25" stroke-linecap="round"/>
+              <text x="18" y="20" text-anchor="middle" font-size="6" fill="white" font-family="Lora">88%</text>
+            </svg>
+            <div class="radial-lbl">Teamwork</div>
+          </div>
+          <div class="radial-item">
+            <svg class="radial-svg" viewBox="0 0 36 36">
+              <circle cx="18" cy="18" r="15.9" fill="none" stroke="#0b2040" stroke-width="3"/>
+              <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--amber)" stroke-width="3" stroke-dasharray="82 18" stroke-dashoffset="25" stroke-linecap="round"/>
+              <text x="18" y="20" text-anchor="middle" font-size="6" fill="white" font-family="Lora">82%</text>
+            </svg>
+            <div class="radial-lbl">Initiative</div>
+          </div>
+          <div class="radial-item">
+            <svg class="radial-svg" viewBox="0 0 36 36">
+              <circle cx="18" cy="18" r="15.9" fill="none" stroke="#0b2040" stroke-width="3"/>
+              <circle cx="18" cy="18" r="15.9" fill="none" stroke="#c084fc" stroke-width="3" stroke-dasharray="91 9" stroke-dashoffset="25" stroke-linecap="round"/>
+              <text x="18" y="20" text-anchor="middle" font-size="6" fill="white" font-family="Lora">91%</text>
+            </svg>
+            <div class="radial-lbl">Attendance</div>
+          </div>
+        </div>
+        <div style="margin-top:1rem;font-size:.7rem;color:var(--muted);">Based on 4,820 active student evaluations</div>
+      </div>
+
+      
+      <div class="graph-card">
+        <div class="graph-card-header">
+          <span class="graph-card-title">Successful Graduations Insarvice Tranning program</span>
+          <span class="graph-badge">2022–2025</span>
+        </div>
+        <svg class="spark-svg" viewBox="0 0 300 80" style="height:100px;width:100%;">
+          <defs>
+            <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="var(--sky)" stop-opacity=".4"/>
+              <stop offset="100%" stop-color="var(--sky)" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M0,65 L50,52 L100,48 L150,38 L200,28 L250,20 L300,10" fill="none" stroke="var(--sky)" stroke-width="2" stroke-linecap="round"/>
+          <path d="M0,65 L50,52 L100,48 L150,38 L200,28 L250,20 L300,10 L300,80 L0,80 Z" fill="url(#lineGrad)"/>
+          <circle cx="50" cy="52" r="3" fill="var(--sky)"/>
+          <circle cx="100" cy="48" r="3" fill="var(--sky)"/>
+          <circle cx="150" cy="38" r="3" fill="var(--sky)"/>
+          <circle cx="200" cy="28" r="3" fill="var(--sky)"/>
+          <circle cx="250" cy="20" r="3" fill="var(--sky)"/>
+          <circle cx="300" cy="10" r="4" fill="var(--teal)"/>
+          <text x="0" y="78" font-size="7" fill="#64748b" font-family="Sora">2022</text>
+          <text x="246" y="78" font-size="7" fill="#64748b" font-family="Sora">2025</text>
+        </svg>
+        <div style="display:flex;justify-content:space-between;margin-top:.5rem;">
+          <div style="font-size:.7rem;color:var(--muted);">2022: 1,240 graduates</div>
+          <div style="font-size:.7rem;color:var(--teal);font-weight:700;">2025: 4,820 graduates</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="partner-section">
+  <div class="partner-inner">
+    <div class="sec-label">Ecosystem</div>
+    <h2 class="sec-title">Institutions &amp; Organizations<br>Working as One</h2>
+
+    <div class="partner-layout">
+      <div class="partner-text">
+        <p class="sec-desc" style="max-width:100%;">
+          Organizations access institutional diploma requirements directly from the platform and use them to build structured in-service training calendars. Students complete duties that meet both their employer's operational needs and their institution's academic criteria — ensuring no student is left behind at graduation.
+        </p>
+        <div class="highlight-box">
+          <h4>How the Collaboration Works</h4>
+          <ul>
+            <li>Institution publishes diploma competency requirements</li>
+            <li>Organizations map training duties to those requirements</li>
+            <li>Supervisors assign tasks aligned to the calendar plan</li>
+            <li>Students complete structured duties for diploma credit</li>
+            <li>Automated reports verify compliance for graduation and organization submit the report direct to the institution</li>
+          </ul>
+        </div>
+      </div>
+
+      <div>
+        <div style="sec-label;font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;">Partner Organizations</div>
+        <div class="logo-carousel">
+          <div class="logo-track" id="logoTrack">
+            <div class="logo-card">🏥 HST Group</div>
+            <div class="logo-card">🏗️ BuildCorp SA</div>
+            <div class="logo-card">💡 TechHub Africa</div>
+            <div class="logo-card">🌿 AgriTrust</div>
+            <div class="logo-card">🏦 Standard Bank</div>
+            <div class="logo-card">📡 Telkom</div>
+            <div class="logo-card">⚙️ EngineerCo</div>
+            <div class="logo-card">🎓 TVET Collages</div>
+          
+            <div class="logo-card">🏥 HST Group</div>
+            <div class="logo-card">🏗️ BuildCorp SA</div>
+            <div class="logo-card">💡 TechHub Africa</div>
+            <div class="logo-card">🌿 AgriTrust</div>
+            <div class="logo-card">🏦 Standard Bank</div>
+            <div class="logo-card">📡 Telkom</div>
+            <div class="logo-card">⚙️ EngineerCo</div>
+            <div class="logo-card">🎓 TVET Collages</div>
+          </div>
+        </div>
+
+        <div style="margin-top:2rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div style="background:var(--navy-card);border:1px solid var(--border);padding:1.2rem;text-align:center;">
+            <div style="font-family:'Lora',serif;font-size:2rem;color:var(--sky);font-weight:700;">147</div>
+            <div style="font-size:.7rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:.3rem;">Partner Orgs</div>
+          </div>
+          <div style="background:var(--navy-card);border:1px solid var(--border);padding:1.2rem;text-align:center;">
+            <div style="font-family:'Lora',serif;font-size:2rem;color:var(--teal);font-weight:700;">40</div>
+            <div style="font-size:.7rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:.3rem;">Institutions</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="timeline-section">
+  <div class="timeline-inner">
+    <div class="sec-label">Training Journey</div>
+    <h2 class="sec-title">Internship Progress Timeline</h2>
+    <p class="sec-desc">A structured roadmap that guides every student from placement through to diploma certification.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:3rem;margin-top:1rem;">
+      <div class="timeline-track">
+        <div class="timeline-item active">
+          <div class="timeline-week">Week 1 - 2</div>
+          <div class="timeline-title"> Onboarding & Orientation</div>
+          <div class="timeline-desc">Student registered on platform and cotract created. Supervisor assigned. Initial tasks created based on program requirements.</div>
+          <div class="timeline-pills"><span class="pill">Profile Setup</span><span class="pill">Induction</span></div>
+        </div>
+        <div class="timeline-item active">
+          <div class="timeline-week">Week 3 - 25</div>
+          <div class="timeline-title"> Core Task Period</div>
+          <div class="timeline-desc">Weekly tasks assigned, Submit weekly report and rated. Performance matrix populated.  progress report generated.</div>
+          <div class="timeline-pills"><span class="pill">Task Completion</span><span class="pill">Weekly Ratings</span></div>
+        </div>
+        <div class="timeline-item active">
+          <div class="timeline-week">Week 26 - 40</div>
+          <div class="timeline-title"> Advanced Duties</div>
+          <div class="timeline-desc">Complex responsibilities aligned with upper-level Requements competencies. AI prediction model activated.</div>
+          <div class="timeline-pills"><span class="pill">AI Prediction</span><span class="pill">Skills Matrix</span></div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-week">Week 41 - 52</div>
+          <div class="timeline-title"> Final Evaluation</div>
+          <div class="timeline-desc">Supervisor completes final ratings and submite final report. Institution reviews  report and duetes.</div>
+          <div class="timeline-pills"><span class="pill">Final Report</span><span class="pill">Approved</span></div>
+        </div>
+      </div>
+
+      
+      <div style="background:var(--navy-card);border:1px solid var(--border);padding:2rem;">
+        <div style="font-size:.75rem;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-bottom:1.5rem;">Organization Calendar — for short training level 4 2026</div>
+        <div style="display:grid;gap:.6rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.7rem 1rem;background:rgba(56,189,248,.1);border-left:3px solid var(--sky);">
+            <div>
+              <div style="font-size:.8rem;font-weight:700;color:var(--white);">Technical Skills Workshop</div>
+              <div style="font-size:.7rem;color:var(--muted);">Mandatory · NQF Level 4</div>
+            </div>
+            <div style="font-size:.7rem;color:var(--sky);">Jan 6-Feb 10</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.7rem 1rem;background:rgba(45,212,191,.08);border-left:3px solid var(--teal);">
+            <div>
+              <div style="font-size:.8rem;font-weight:700;color:var(--white);"> Supervisor Review</div>
+              <div style="font-size:.7rem;color:var(--muted);">Evaluation · All students</div>
+            </div>
+            <div style="font-size:.7rem;color:var(--teal);">Feb 14-Mar 2</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.7rem 1rem;background:rgba(251,191,36,.08);border-left:3px solid var(--amber);">
+            <div>
+              <div style="font-size:.8rem;font-weight:700;color:var(--white);">Safety & Compliance Training</div>
+              <div style="font-size:.7rem;color:var(--muted);">Institution Requirement</div>
+            </div>
+            <div style="font-size:.7rem;color:var(--amber);">Mar 3</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.7rem 1rem;background:rgba(56,189,248,.06);border-left:3px solid #c084fc;">
+            <div>
+              <div style="font-size:.8rem;font-weight:700;color:var(--white);">Final Portfolio Submission</div>
+              <div style="font-size:.7rem;color:var(--muted);">Programm  requirement</div>
+            </div>
+            <div style="font-size:.7rem;color:#c084fc;">Mar 28</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.7rem 1rem;background:rgba(45,212,191,.12);border-left:3px solid var(--teal);">
+            <div>
+              <div style="font-size:.8rem;font-weight:700;color:var(--white);">🎓 Ready for employement</div>
+              <div style="font-size:.7rem;color:var(--teal);">Training finished</div>
+            </div>
+            <div style="font-size:.7rem;color:var(--teal);">Apr 15</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="ai-section">
+  <div class="ai-inner">
+    <div class="sec-label">Intelligence </div>
+    <h2 class="sec-title">AI Performance Prediction</h2>
+    <p class="sec-desc">Our machine-learning engine analyses task completion patterns, weekly reports, rating trends, and attendance data to predict each student's diploma readiness — weeks before the final evaluation.</p>
+
+    <div class="ai-grid">
+      <div class="ai-visual">
+        <div style="font-size:.7rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:1rem;">Graduate: Thabo Nkosi · Week 14 of 20</div>
+        <div class="ai-score-ring">
+          <svg class="ring-svg" viewBox="0 0 160 160">
+            <circle cx="80" cy="80" r="68" fill="none" stroke="var(--navy-mid)" stroke-width="12"/>
+            <circle cx="80" cy="80" r="68" fill="none" stroke="url(#ringGrad)" stroke-width="12"
+              stroke-dasharray="370 427" stroke-dashoffset="106" stroke-linecap="round"
+              transform="rotate(-90 80 80)"/>
+            <defs>
+              <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="var(--sky)"/>
+                <stop offset="100%" stop-color="var(--teal)"/>
+              </linearGradient>
+            </defs>
+            <text x="80" y="72" text-anchor="middle" font-size="28" fill="white" font-family="Lora,serif" font-weight="700">87%</text>
+            <text x="80" y="92" text-anchor="middle" font-size="10" fill="#94a3b8" font-family="Sora">Predicted Score</text>
+            <text x="80" y="108" text-anchor="middle" font-size="9" fill="var(--teal)" font-family="Sora"></text>
+          </svg>
+        </div>
+        <div class="ai-metrics">
+          <div class="ai-metric">
+            <div class="ai-metric-val">94%</div>
+            <div class="ai-metric-label">Task Rate</div>
+          </div>
+          <div class="ai-metric">
+            <div class="ai-metric-val">4.3</div>
+            <div class="ai-metric-label">Avg Rating</div>
+          </div>
+          <div class="ai-metric">
+            <div class="ai-metric-val">50%</div>
+            <div class="ai-metric-label">Approved Weekly reports</div>
+          </div>
+          <div class="ai-metric">
+            <div class="ai-metric-val">3%</div>
+            <div class="ai-metric-label">Rejectd Weekly Reports</div>
+          </div>
+          <div class="ai-metric">
+            <div class="ai-metric-val">98%</div>
+            <div class="ai-metric-label">Attendance</div>
+          </div>
+          <div class="ai-metric">
+            <div class="ai-metric-val"></div>
+            <div class="ai-metric-label"></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="predict-badge">🤖 AI Insights Engine</div>
+        <h3 style="font-family:'Lora',serif;font-size:1.6rem;color:var(--white);margin-bottom:.8rem;line-height:1.3;">Predict Success.<br>Intervene Early.</h3>
+        <p style="font-size:.9rem;color:var(--muted);line-height:1.8;margin-bottom:1.5rem;">The AI engine continuously monitors performance signals and flags at-risk Graduates before they fall behind — giving supervisors time to intervene and support programm completion.</p>
+
+        <div class="ai-insights">
+          <div class="ai-insight">
+            <div class="ai-insight-icon">📈</div>
+            <div class="ai-insight-text">
+              <strong>Trending Upward</strong>
+              Thabo's performance improved by 10% over the last 4 weeks, placing him in the top of his performance.
+            </div>
+          </div>
+          <div class="ai-insight">
+            <div class="ai-insight-icon">⚠️</div>
+            <div class="ai-insight-text">
+              <strong>Gap Identified</strong>
+              Report Writing competency is below threshold. Supervisor notified to assign targeted tasks this week.
+            </div>
+          </div>
+          <div class="ai-insight">
+            <div class="ai-insight-icon">🎯</div>
+            <div class="ai-insight-text">
+              <strong>Programm Pathway Clear</strong>
+               The graduate will meet all requarments competencies by Week 18 — 25 weeks ahead of schedule.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="dashboard-section">
+  <div class="dashboard-inner">
+    <div class="sec-label">Platform Preview</div>
+    <h2 class="sec-title">See Your Dashboard in Action</h2>
+    <p class="sec-desc">A real-time command center giving supervisors, Admin, Hosting Organizations, Funding Organization and institutions complete visibility over every student, every task, every weekly reports.</p>
+
+    <div class="dashboard-frame">
+      <div class="dashboard-bar">
+        <div class="db-dot" style="background:#ef4444;"></div>
+        <div class="db-dot" style="background:var(--amber);"></div>
+        <div class="db-dot" style="background:#22c55e;"></div>
+        <div class="db-title">Student Performance Dashboard · In-Service Training 2026</div>
+      </div>
+
+      <div class="db-grid">
+        <div class="db-widget"><div class="db-widget-num" style="color:var(--sky);">4,820</div><div class="db-widget-label">Active Students</div></div>
+        <div class="db-widget"><div class="db-widget-num" style="color:var(--teal);">96%</div><div class="db-widget-label">On Track</div></div>
+        <div class="db-widget"><div class="db-widget-num" style="color:var(--amber);">312</div><div class="db-widget-label">Supervisors</div></div>
+        <div class="db-widget"><div class="db-widget-num" style="color:#c084fc;">28.6K</div><div class="db-widget-label">Tasks Done</div></div>
+      </div>
+
+      <div class="db-lower">
+        <div class="db-chart-area">
+          <div class="db-chart-title">Monthly Completion Rate</div>
+          <div class="mini-bars">
+            <div class="mini-bar" style="height:55%;background:var(--sky-dim);animation-delay:.1s;"></div>
+            <div class="mini-bar" style="height:68%;background:var(--sky-dim);animation-delay:.2s;"></div>
+            <div class="mini-bar" style="height:72%;background:var(--sky);animation-delay:.3s;"></div>
+            <div class="mini-bar" style="height:80%;background:var(--sky);animation-delay:.4s;"></div>
+            <div class="mini-bar" style="height:85%;background:var(--sky);animation-delay:.5s;"></div>
+            <div class="mini-bar" style="height:90%;background:var(--sky);animation-delay:.6s;"></div>
+            <div class="mini-bar" style="height:88%;background:var(--sky);animation-delay:.7s;"></div>
+            <div class="mini-bar" style="height:96%;background:var(--teal);animation-delay:.8s;"></div>
+          </div>
+        </div>
+        <div class="db-list">
+          <div class="db-chart-title">Top Performers</div>
+          <div class="db-list-item"><div class="db-avatar" style="background:rgba(56,189,248,.2);color:var(--sky);">TN</div><span class="db-name">Thabo N.</span><span class="db-score">4.9★</span></div>
+          <div class="db-list-item"><div class="db-avatar" style="background:rgba(45,212,191,.2);color:var(--teal);">AM</div><span class="db-name">Amara M.</span><span class="db-score">4.7★</span></div>
+          <div class="db-list-item"><div class="db-avatar" style="background:rgba(251,191,36,.2);color:var(--amber);">KZ</div><span class="db-name">Kuhle Z.</span><span class="db-score">4.6★</span></div>
+          <div class="db-list-item"><div class="db-avatar" style="background:rgba(192,132,252,.2);color:#c084fc;">SB</div><span class="db-name">Sipho B.</span><span class="db-score">4.5★</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="testimonials-section">
+  <div class="testimonials-inner">
+    <div class="sec-label">Trusted By Leaders</div>
+    <h2 class="sec-title">What Institutions &amp;<br>Supervisors Are Saying</h2>
+
+    <div class="testi-grid">
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"This platform transformed how we manage 600 in-service students. The calendar alignment with our diploma requirements saved us months of manual coordination."</p>
+        <div class="testi-author">
+          <div class="testi-avatar">👩‍🏫</div>
+          <div>
+            <div class="testi-name">Dr. Nomsa Dlamini</div>
+            <div class="testi-role">Academic Coordinator</div>
+            <div class="testi-org">Tshwane University of Technology</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"The AI prediction flagged 4 at-risk students in our analysis early enough for us to intervene. All 4 went on to successfully complete their internship. Remarkable tool."</p>
+        <div class="testi-author">
+          <div class="testi-avatar">👨‍💼</div>
+          <div>
+            <div class="testi-name">Yonela Sitshaka</div>
+            <div class="testi-role">ICT Supervisor</div>
+            <div class="testi-org">UMngeni Water Services</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"Setting our organization's training calendar against the institution's requirements is now seamless. Our students arrive prepared, and graduation rates have jumped from 34% to 77% Thanks To UMngeni Water Services System."</p>
+        <div class="testi-author">
+          <div class="testi-avatar">👩‍💼</div>
+          <div>
+            <div class="testi-name">Priya Naidoo</div>
+            <div class="testi-role">HR & Learnerships Manager</div>
+            <div class="testi-org">UMhlathuze Water</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="download-section">
+  <div class="download-inner">
+    <div>
+      <div class="sec-label">Reports & Documentation</div>
+      <h2 class="sec-title">Professional Reports,<br>Ready to Download</h2>
+      <p class="sec-desc" style="margin-bottom:1rem;">Generate, export, and submit student performance reports in seconds — formatted for institutional review and Employers for employement oportunities.</p>
+
+      <div class="download-btns">
+        <a href="#" class="download-btn">
+          <div class="download-btn-icon">📄</div>
+          <div class="download-btn-text">
+            <strong>Individual Student Report</strong>
+            <span>Full performance breakdown · PDF format</span>
+          </div>
+          <div class="download-btn-arrow">↓</div>
+        </a>
+        <a href="#" class="download-btn">
+          <div class="download-btn-icon">📊</div>
+          <div class="download-btn-text">
+            <strong> Analytics Report</strong>
+            <span>Group performance summary · PDF / Excel</span>
+          </div>
+          <div class="download-btn-arrow">↓</div>
+        </a>
+        <a href="#" class="download-btn">
+          <div class="download-btn-icon">🏛️</div>
+          <div class="download-btn-text">
+            <strong>Institution Compliance Report</strong>
+            <span>Diploma criteria coverage audit · PDF</span>
+          </div>
+          <div class="download-btn-arrow">↓</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="report-mockup">
+      <div class="report-header">
+        <div class="report-logo">Student Performance Report</div>
+        <div class="report-date">Generated: 24 Feb 2026</div>
+      </div>
+      <div class="report-row"><span class="report-field">Student Name</span><span class="report-val">Thabo Nkosi</span></div>
+      <div class="report-row"><span class="report-field">Institution</span><span class="report-val">TUT Engineering</span></div>
+      <div class="report-row"><span class="report-field">Organization</span><span class="report-val">HealthSA Group</span></div>
+      <div class="report-row"><span class="report-field">Training Period</span><span class="report-val">Jan2025 – Apr 2026</span></div>
+      <div class="report-row"><span class="report-field">Tasks Completed</span><span class="report-val">100 / 120</span></div>
+      <div class="report-row"><span class="report-field">Average Rating</span><span class="report-val">4.3 / 5.0 ★</span></div>
+      <div class="report-row"><span class="report-field">Employement Status</span><span class="report-val" style="color:var(--teal);">✓ Ready</span></div>
+      <div class="report-score-bar">
+        <div class="score-label"><span>Technical Skills</span><span style="color:var(--sky);">88%</span></div>
+        <div class="score-track"><div class="score-fill" style="width:88%;background:linear-gradient(to right,var(--sky-dim),var(--sky));"></div></div>
+      </div>
+      <div class="report-score-bar" style="margin-top:.8rem;">
+        <div class="score-label"><span>Professional Conduct</span><span style="color:var(--teal);">95%</span></div>
+        <div class="score-track"><div class="score-fill" style="width:95%;background:linear-gradient(to right,var(--teal),var(--sky-light));"></div></div>
+      </div>
+      <div class="report-score-bar" style="margin-top:.8rem;">
+        <div class="score-label"><span>Task Completion</span><span style="color:var(--amber);">97%</span></div>
+        <div class="score-track"><div class="score-fill" style="width:97%;background:linear-gradient(to right,var(--amber),#fde68a);"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="cta-section">
+  <div class="cta-inner">
+    <div class="sec-label" style="text-align:center;">Ready to Transform Training?</div>
+    <h2 class="cta-title">Connect Your Institution.<br><em>Empower Every Student.</em></h2>
+    <p class="cta-desc">Join 38 institutions and 147 organizations already using the platform to deliver structured, measurable, diploma-ready in-service training.</p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+      <a href="" class="btn-sky" style="font-size:1rem;padding:1rem 2.5rem;">Register</a>
+      <a href="" class="btn-ghost" style="font-size:1rem;padding:1rem 2.5rem;">Login to Dashboard</a>
+    </div>
+  </div>
+</div>
+
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <h3>InService Pro</h3>
+        <p>A centralized platform bridging institutions and organizations for structured, diploma-aligned in-service training and learnerships.</p>
+        <div class="social-row">
+          <a href="#" class="social-btn">𝕏</a>
+          <a href="#" class="social-btn">in</a>
+          <a href="#" class="social-btn">fb</a>
+          <a href="#" class="social-btn">▶</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Platform</h4>
+        <ul>
+          <li><a href="#">Features</a></li>
+          <li><a href="#">Dashboard</a></li>
+          <li><a href="#">Analytics</a></li>
+          <li><a href="#">Reports</a></li>
+          <li><a href="#">AI Insights</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>For Organizations</h4>
+        <ul>
+          <li><a href="#">Calendar Planner</a></li>
+          <li><a href="#">Learnerships</a></li>
+          <li><a href="#">Compliance</a></li>
+          <li><a href="#">Partner Portal</a></li>
+          <li><a href="#">Join as Partner</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Support</h4>
+        <ul>
+          <li><a href="">Register</a></li>
+          <li><a href="">Login</a></li>
+          <li><a href="#">Help Center</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Service</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 InService Pro · Student Task & Performance Management System. All rights reserved. Nokulunga Shangase</p>
+      <div class="footer-links">
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">Accessibility</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+
+function animateCount(el, target, duration) {
+  let start = 0;
+  const step = target / (duration / 16);
+  const timer = setInterval(() => {
+    start += step;
+    if (start >= target) { el.textContent = target.toLocaleString(); clearInterval(timer); }
+    else { el.textContent = Math.floor(start).toLocaleString(); }
+  }, 16);
+}
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      document.querySelectorAll('.count').forEach(el => {
+        animateCount(el, parseInt(el.dataset.target), 2000);
+      });
+      observer.disconnect();
+    }
+  });
+}, { threshold: 0.3 });
+
+const counterStrip = document.querySelector('.counter-strip');
+if (counterStrip) observer.observe(counterStrip);
+</script>
+
+{% endblock %}
 
 

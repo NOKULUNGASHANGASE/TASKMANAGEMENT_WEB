@@ -1,5 +1,5 @@
 Smart Student Task & Performance Management System
-Project Overview
+Project Overview that is still under development.
 
 The Smart Student Task & Performance Management System is a web-based platform developed using Django to improve the management of internships, in-service training, and learnership programs between organizations and academic institutions.
 

@@ -45,6 +45,7 @@ JavaScript
 Backend
 Django
 Django REST Framework
+
 Database
 SQLite (Development)
 PostgreSQL / MySQL (Production)
@@ -56,21 +57,24 @@ AI Module
 Python Machine Learning Models
 Performance prediction analytics
 User Roles
+
 Student
 View assigned tasks
 Submit weekly reports
 View performance dashboard
 Monitor internship progress
+
 Supervisor
 Assign tasks
 Evaluate student performance
 Generate performance reports
 Monitor internship progress
+
 Admin
 Manage users
 Monitor system analytics
 Generate institutional reports
-Problem the System Solves
+
 
 Organizations that host interns often face challenges such as:
 
@@ -91,24 +95,50 @@ Provide data-driven student performance evaluation
 Enhance collaboration between institutions and organizations
 Support student employability through professional performance reports
 Improve internship planning and scheduling
-Technologies Used
-Python
-Django
+
+System Architecture
+Frontend
+HTML5
+CSS3
 JavaScript
-HTML5 & CSS3
 Bootstrap
-REST APIs
-Machine Learning (Performance Prediction)
-Future Improvements
+Backend
+Django
+Django REST Framework
+Database
+SQLite (Development)
+PostgreSQL (Production)
+Cloud & DevOps Infrastructure
+
+The system is designed to be deployed using modern cloud and container technologies.
+
+Microsoft Azure – cloud hosting and infrastructure
+Docker – containerizing the application for consistent deployment
+Kubernetes – managing and scaling application containers
+Azure DevOps – automated build, testing, and deployment pipelines
+Deployment Architecture
+
+The system follows a containerized microservice-ready deployment model:
+
+Application packaged using Docker
+Containers deployed to Kubernetes
+Infrastructure hosted on Microsoft Azure
+CI/CD pipelines managed through Azure DevOps
+
+This architecture provides:
+
+High scalability
+Fault tolerance
+Automated deployments
+Improved system reliability
 
 Future versions of the system may include:
 
 Mobile application for students and supervisors
 Advanced AI performance prediction models
-Integration with institutional learning systems
-Blockchain-based certification verification
+Integration with institutional learning systems.
 Real-time analytics dashboards
-Author
+
 
 Nokulunga Perfect Shangase
 

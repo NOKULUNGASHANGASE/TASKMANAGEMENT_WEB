@@ -1,12 +1,25 @@
 # Environment files
-*.env.*
 .env
-*.gitignore.*
-#SQLite database files
+*.env.*
+
+# Virtual environments
+venv/
+env/
+
+# Python cache
+__pycache__/
+
+# Database
+db.sqlite3
 *.db
 *.sqlite
-*.sqlite3"credentials.json" 
-"*.json" 
+*.sqlite3
+
+# Sensitive files
+credentials.json
+*.json
+
+# Custom project files
 *.task-calendar-sync-459909-4fa88ce7804f.json
 *.google_calendar.py
 *.emailing.py
